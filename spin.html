@@ -382,7 +382,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   const t = LANG.t;
   let state = { className: 'My Class', students: [], noRepeat: true, sound: true, history: [], lang: 'en', theme: 'balloons' };
   let paintedTheme = null;
-  let flipMemo = [];   // which names are turned the other way up (see draw)
   let faceMemo = [];   // how much each face is turned to stand upright (see draw)
   let pool = [];
   let rot = 0, spinning = false, winnerIdx = -1, flashOn = false, size = 0, dpr = 1;
@@ -552,11 +551,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
       if (n > 1) {
         const fs = Math.max(floorFs, fit(perPx[i]));
         if (avail > 8) {
-          // Turn names that would be upside down. Worked out while the wheel is still and kept
-          // during a spin, so names don't flip over as they pass the pointer.
+          // While the wheel is still, names that would be upside down are turned the right way up.
+          // While it spins, every name points the same way, like a real prize wheel, so the
+          // letters line up and nothing flips over as it passes the pointer.
           const ang = start + seg / 2;
-          if (!spinning) flipMemo[i] = across ? Math.sin(ang) > 0.001 : Math.cos(ang) < -0.001;
-          const flip = !!flipMemo[i];
+          const flip = !spinning && (across ? Math.sin(ang) > 0.001 : Math.cos(ang) < -0.001);
           ctx.fillStyle = txt; ctx.textBaseline = 'middle'; ctx.font = font(fs);
           if (across) {
             ctx.save(); ctx.translate(tx, 0); ctx.rotate(flip ? -Math.PI / 2 : Math.PI / 2);
