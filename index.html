@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: the browser may only load this app's own files and may not contact any other website -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Class Name Picker</title>
+<meta name="description" content="Pick a random student with their photo. Works without internet.">
+<meta name="theme-color" content="#FFC83D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Name Picker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+/* Andika: school-style "a" and "g" for early readers. Bundled so it works offline. */
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Teacher screen: set up the class here. The children's wheel lives on spin.html.
+   Works fully offline: no web fonts, no CDNs. */
+:root {
+  --bg: #EAF4FF;
+  --dot: #C9DDF5;
+  --panel: #FFFFFF;
+  --ink: #1D2742;
+  --muted: #5B6785;
+  --line: #D5E1F0;
+  --sun: #FFC83D;
+  --sun-deep: #E9A800;
+  --berry: #E8467C;
+  --leaf: #23A86A;
+  --sky: #2F7BEA;
+  --grape: #7558F0;
+  --font-display: "Andika", "Century Gothic", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+  --font-body: "Andika", "Century Gothic", "Comic Sans MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1.4px, transparent 1.6px);
+  background-size: 22px 22px;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.brand { display: flex; align-items: center; gap: 12px; flex: 1 1 280px; min-width: 0; }
+.logo { width: 48px; height: 48px; border-radius: 14px; flex: none; display: block; box-shadow: 0 3px 0 var(--sun-deep); }
+.brand-text { min-width: 0; flex: 1; }
+.eyebrow { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding-left: 10px; }
+#className {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(22px, 3vw, 32px);
+  border: 2px dashed transparent; border-radius: 10px; background: transparent;
+  padding: 0 8px; min-width: 0; width: 100%; max-width: 18em; text-overflow: ellipsis;
+}
+#className:hover { border-color: var(--line); }
+#className:focus { border-color: var(--sky); background: var(--panel); outline: none; }
+.name-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.rename {
+  flex: none; width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--line);
+  background: var(--panel); color: var(--muted); display: grid; place-items: center; padding: 0;
+}
+.rename svg { width: 18px; height: 18px; }
+.rename:hover { color: var(--sky); border-color: var(--sky); }
+.hdr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn {
+  border: 2px solid var(--line); background: var(--panel); border-radius: 12px;
+  padding: 9px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;
+  transition: transform .08s ease, background .15s ease; text-decoration: none; color: var(--ink);
+}
+.btn:hover { background: #F4F8FD; }
+.btn:active { transform: translateY(1px); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.primary { background: var(--sky); border-color: var(--sky); color: #fff; }
+.btn.primary:hover { background: #2469D0; }
+.btn.install { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+.btn.install:hover { background: #1D9159; }
+.btn.danger { color: var(--berry); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.panel { background: var(--panel); border: 2px solid var(--line); border-radius: 22px; padding: 22px; min-width: 0; }
+
+/* Class tabs */
+.classes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.classes-label { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.class-tabs { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.class-tab {
+  border: 2px solid var(--line); background: var(--panel); border-radius: 999px; padding: 8px 14px;
+  font-weight: 700; display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+}
+.class-tab .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16em; }
+.class-tab .ct { font-size: 13px; font-weight: 800; background: #EEF3FA; color: var(--muted); border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+.class-tab:hover { background: #F4F8FD; }
+.class-tab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.class-tab[aria-selected="true"] .ct { background: rgba(255,255,255,.2); color: #fff; }
+.add-class { border-style: dashed; border-radius: 999px; padding: 8px 14px; color: var(--muted); }
+
+/* Launch bar */
+.classbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  background: rgba(255,255,255,.7); border: 2px solid var(--line); border-radius: 16px; padding: 10px 12px;
+}
+.cb-item { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.cb-item svg { width: 20px; height: 20px; color: var(--sky); flex: none; }
+.cb-item select { border: 2px solid var(--line); background: var(--panel); border-radius: 10px; font-weight: 700; padding: 6px 8px; cursor: pointer; }
+.cb-spacer { flex: 1; }
+.launchers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+/* phones: the two big Start buttons come first, class settings after them */
+@media (max-width: 640px) {
+  .launchers { order: 1; } .launch-note { order: 2; } .classes { order: 3; } .classbar { order: 4; } .roster-panel { order: 5; }
+}
+/* Delete this class is tucked away under Class options so it isn't pressed by mistake */
+.class-opts { position: relative; }
+.class-opts summary { list-style: none; cursor: pointer; color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 8px; border-radius: 10px; }
+.class-opts summary::-webkit-details-marker { display: none; }
+.class-opts summary:hover { background: #F4F8FD; }
+.class-opts[open] summary { color: var(--ink); }
+.class-opts .btn { margin-top: 6px; }
+button.go { cursor: pointer; }
+@media (max-width: 860px) { .launchers { grid-template-columns: minmax(0, 1fr); } }
+.launch-note { margin: -8px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
+.roster-foot .note a { color: var(--sky); font-weight: 700; }
+.launch {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: space-between;
+  background: linear-gradient(120deg, #FFF4D1, #FFE7F0 55%, #E8E3FF);
+  border-color: #F3DDA0;
+}
+.launch h2 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 3vw, 28px); }
+.launch p { margin: 0; color: var(--muted); line-height: 1.5; max-width: 52ch; }
+.go {
+  justify-self: start;
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 3vw, 28px);
+  background: var(--sun); color: var(--ink); border: none; border-radius: 999px; text-decoration: none;
+  padding: 16px 34px; box-shadow: 0 6px 0 var(--sun-deep); white-space: nowrap;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.go svg { width: 30px; height: 30px; }
+.go:hover { filter: brightness(1.04); }
+.go:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--sun-deep); }
+.go[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+.groups-panel { background: linear-gradient(120deg, #DDF6EA, #E3F0FF 55%, #EDE6FF); border-color: #B9E3CF; }
+.go-groups { background: var(--leaf); color: #fff; box-shadow: 0 6px 0 #17804F; }
+.go-groups:active { box-shadow: 0 2px 0 #17804F; }
+.toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--leaf); flex: none; }
+
+/* Roster */
+.roster-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.roster-head h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; }
+.add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.add-row .or { color: var(--muted); font-weight: 700; font-size: 14px; }
+.add-name { display: flex; gap: 8px; flex: 1 1 320px; min-width: 0; }
+.add-hint { margin: 8px 0 14px; font-size: 14px; color: var(--muted); }
+.add-name input { flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; background: #F8FBFF; }
+.add-name input:focus { border-color: var(--sky); outline: none; background: var(--panel); }
+
+#roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; }
+.card {
+  position: relative; border: 2px solid var(--line); border-radius: 16px; padding: 8px 8px 6px;
+  background: var(--panel); display: flex; flex-direction: column; gap: 6px;
+}
+.card .pic { aspect-ratio: 1; width: 100%; border-radius: 11px; overflow: hidden; background: #F1F6FC; position: relative; }
+.card .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card .pic .initials { width: 100%; height: 100%; font-size: 34px; border-radius: 0; }
+.card .pic label.swap {
+  position: absolute; inset: auto 6px 6px auto; width: 30px; height: 30px; border-radius: 9px;
+  background: rgba(255,255,255,.92); display: grid; place-items: center; cursor: pointer;
+  opacity: 0; transition: opacity .15s ease; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.card .pic label.swap svg { width: 16px; height: 16px; }
+.card:hover .pic label.swap, .card .pic label.swap:focus-within, .card.nophoto .pic label.swap { opacity: 1; }
+.card .pic input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.card input.nm {
+  width: 100%; border: 2px solid transparent; border-radius: 8px; padding: 2px 4px; font-weight: 700;
+  text-align: center; background: transparent; font-size: 15px;
+}
+.card input.nm:hover { border-color: var(--line); }
+.card input.nm:focus { border-color: var(--sky); outline: none; }
+.card .rm {
+  position: absolute; top: -9px; right: -9px; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--line); background: var(--panel); display: grid; place-items: center;
+  opacity: 0; transition: opacity .15s ease; padding: 0;
+}
+.card .rm svg { width: 14px; height: 14px; }
+.card:hover .rm, .card .rm:focus-visible { opacity: 1; }
+@media (hover: none) { .card .rm, .card .pic label.swap { opacity: 1; } }
+.card .badge {
+  position: absolute; top: 12px; left: 12px; font-size: 13px; font-weight: 800; letter-spacing: .04em;
+  background: var(--leaf); color: #fff; border-radius: 999px; padding: 2px 8px;
+}
+
+/* Same-name warning */
+.dup-warn {
+  display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px;
+  background: #FFF4DE; border: 2px solid #F5C46B; border-radius: 14px; padding: 12px 14px; line-height: 1.45;
+}
+.dup-warn svg { width: 22px; height: 22px; flex: none; margin-top: 1px; }
+.dup-warn b { font-weight: 800; }
+.dup-warn p { margin: 0; }
+.dup-warn p + p { margin-top: 4px; color: var(--muted); font-size: 14px; }
+.card.dup { border-color: #F0A93B; box-shadow: 0 0 0 3px #FFE2AE; }
+.card.dup input.nm { background: #FFF4DE; }
+.card .dup-note { font-size: 13px; font-weight: 700; color: #A3610A; text-align: center; margin-top: -4px; line-height: 1.2; }
+
+.initials {
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; color: #fff;
+  border-radius: 50%; text-transform: uppercase; letter-spacing: .02em;
+}
+
+.empty {
+  border: 3px dashed var(--line); border-radius: 18px; padding: 28px 18px; text-align: center; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty h3 { margin: 0; color: var(--ink); font-family: var(--font-display); font-size: 20px; }
+.empty p { margin: 0; max-width: 50ch; line-height: 1.5; }
+.empty code { background: #F1F6FC; padding: 1px 6px; border-radius: 6px; font-family: inherit; font-weight: 700; color: var(--ink); }
+.empty .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+.roster-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 2px dashed var(--line); }
+.roster-foot .note { flex-basis: 100%; font-size: 14px; color: var(--muted); margin: 0 0 4px; line-height: 1.45; }
+
+#dropzone {
+  position: fixed; inset: 0; z-index: 40; background: rgba(47,123,234,.18); backdrop-filter: blur(2px);
+  display: grid; place-items: center; pointer-events: none;
+}
+#dropzone div {
+  background: var(--panel); border: 4px dashed var(--sky); border-radius: 26px; padding: 34px 44px;
+  font-family: var(--font-display); font-weight: 800; font-size: 26px;
+}
+/* Confirmation pop-up */
+.confirm-back {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: rgba(29,39,66,.55);
+}
+.confirm-card {
+  background: var(--panel); border-radius: 22px; padding: 24px; width: min(440px, 100%);
+  display: flex; flex-direction: column; gap: 12px; text-align: center; align-items: center;
+  box-shadow: 0 20px 50px rgba(29,39,66,.3); animation: cfpop .22s cubic-bezier(.2,1.3,.4,1) both;
+}
+@keyframes cfpop { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .confirm-card { animation: none; } }
+.cf-pic { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 4px solid var(--line); }
+.cf-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cf-pic .initials { width: 100%; height: 100%; border-radius: 0; font-size: 36px; }
+.confirm-card h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; text-wrap: balance; overflow-wrap: anywhere; }
+.confirm-card p { margin: 0; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
+.cf-input {
+  width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 11px 14px; font-size: 18px;
+  font-weight: 700; text-align: center; background: #F8FBFF;
+}
+.cf-input:focus { border-color: var(--sky); outline: none; background: var(--panel); }
+.cf-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.cf-actions .btn { min-width: 120px; justify-content: center; }
+.btn.solid-danger { background: var(--berry); border-color: var(--berry); color: #fff; }
+.btn.solid-danger:hover { background: #D13A6C; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 70;
+  background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-weight: 600;
+  max-width: calc(100% - 32px); text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.2);
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icons/icon-192.png" alt="">
+      <div class="brand-text">
+        <div class="eyebrow" data-t="teacherSetup">Teacher setup</div>
+        <div class="name-row">
+          <input id="className" aria-label="Class name" data-t-aria="className" value="My Class" maxlength="40">
+          <button class="rename" id="renameBtn" type="button" title="Rename this class" aria-label="Rename this class">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn install" id="installBtn" type="button" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7M9 11l3 3 3-3M10 18h4"/></svg>
+        <span data-t="installApp">Install app</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="classes" aria-label="Your classes">
+    <span class="classes-label" data-t="yourClasses">Your classes</span>
+    <div class="class-tabs" id="classTabs" role="tablist"></div>
+    <button class="btn add-class" id="addClassBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span data-t="newClass">New class</span>
+    </button>
+  </nav>
+
+  <!-- Settings for the whole class: used by both children's screens -->
+  <section class="classbar" aria-label="Class settings">
+    <label class="cb-item" for="optLang" title="Language of Spin Time and Group Time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg> Kids' language
+      <select id="optLang"></select>
+    </label>
+    <label class="cb-item toggle"><input type="checkbox" id="optSound" checked> <span data-t="sounds">Sounds</span></label>
+    <span class="cb-spacer"></span>
+    <button class="btn" id="exportBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+      <span data-t="saveBackup">Save backup</span>
+    </button>
+    <label class="btn" for="importInput" tabindex="0" id="importBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 19h16"/></svg>
+      <span data-t="openBackup">Open backup</span>
+    </label>
+    <input type="file" id="importInput" accept=".json,application/json" hidden>
+    <details class="class-opts">
+      <summary>Class options</summary>
+      <button class="btn danger" id="deleteClassBtn" type="button" data-t="deleteClass">Delete this class</button>
+    </details>
+  </section>
+
+  <!-- The two children's screens. Their own settings (theme, turns, groups) are on those screens. -->
+  <div class="launchers">
+    <section class="panel launch" aria-label="Spin Time">
+      <div>
+        <h2>Spin Time</h2>
+        <p>Pick who recites next with the name wheel. Theme and turns are set on that screen.</p>
+      </div>
+      <button class="go" id="goBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3 5.3 18.7"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>
+        <span data-t="startSpin">Start Spin Time</span>
+      </button>
+    </section>
+    <section class="panel launch groups-panel" aria-label="Group Time">
+      <div>
+        <h2>Group Time</h2>
+        <p>Mix the class into random groups. Number of groups, names, show and theme are set on that screen.</p>
+      </div>
+      <button class="go go-groups" id="goGroups" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="8" r="3"/><path d="M2.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5M11 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5"/></svg>
+        <span>Start Group Time</span>
+      </button>
+    </section>
+  </div>
+  <p class="launch-note">To come back here from either screen, press and hold the Teacher button in its corner.</p>
+
+  <section class="panel roster-panel" aria-label="Class list">
+    <div class="roster-head">
+      <h2 id="rosterTitle">Students</h2>
+    </div>
+    <!-- Two ways to add students, side by side: photos (names come from the file names) or typed names -->
+    <div class="add-row">
+      <label class="btn primary" for="photoInput" tabindex="0" id="addPhotosBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-t="addPhotos">Add student photos</span>
+      </label>
+      <input type="file" id="photoInput" accept="image/*" multiple hidden>
+      <span class="or">or</span>
+      <form class="add-name" id="addNameForm">
+        <input id="newName" data-t-placeholder="namePlaceholder" data-t-aria="studentName" placeholder="Type a name and press Add (use commas for several)" aria-label="Student name" maxlength="400" autocomplete="off">
+        <button class="btn" type="submit" data-t="add">Add</button>
+      </form>
+    </div>
+    <p class="add-hint">Photos up to 20 MB each. They are made smaller automatically, so phone photos are fine.</p>
+    <div class="dup-warn" id="dupWarn" role="status" hidden></div>
+    <div id="roster"></div>
+    <div class="roster-foot">
+      <p class="note">Students are saved on this device automatically. They are never uploaded. <a href="privacy.html">About &amp; privacy</a></p>
+      <button class="btn danger" id="clearBtn" type="button" data-t="removeAll">Remove all students</button>
+    </div>
+  </section>
+</div>
+
+<div id="dropzone" hidden><div data-t="dropPhotos">Drop photos to add students</div></div>
+<div id="confirm" class="confirm-back" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
+  <div class="confirm-card">
+    <div class="cf-pic" id="cfPic" hidden></div>
+    <h3 id="cfTitle"></h3>
+    <p id="cfText"></p>
+    <input class="cf-input" id="cfInput" type="text" maxlength="40" autocomplete="off" hidden>
+    <div class="cf-actions">
+      <button class="btn" id="cfCancel" type="button" data-t="cancel">Cancel</button>
+      <button class="btn" id="cfOk" type="button"></button>
+    </div>
+  </div>
+</div>
+<div id="toast" hidden></div>
+
+<script src="lang.js"></script>
+<script src="themes.js"></script>
+<script src="store.js"></script>
+<script>
+(() => {
+  const MAX_PHOTO = 20 * 1024 * 1024; // bigger photos can freeze older school computers
+  const COLORS = ['#2F7BEA', '#E8467C', '#23A86A', '#7558F0', '#F08A24', '#0EA5B7', '#D9478F', '#5E7CE2'];
+  const SAMPLE = ['Ava', 'Liam', 'Sofia', 'Noah', 'Mia', 'Elijah', 'Isabella', 'Lucas', 'Amara', 'Mateo', 'Zoe', 'Kai'];
+
+  const t = LANG.t;
+  let state = STORE.blankClass();   // the class being edited
+  let meta = { current: state.id, classes: [] };   // all classes (names and counts, for the tabs)
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    className: $('className'), roster: $('roster'),
+    optSound: $('optSound'), toast: $('toast'), dropzone: $('dropzone'),
+    clearBtn: $('clearBtn'), rosterTitle: $('rosterTitle'), goBtn: $('goBtn')
+  };
+
+  // ---------- storage (store.js, shared with spin.html) ----------
+  async function load() {
+    const got = await STORE.currentClass();
+    meta = got.meta; state = got.cls;
+  }
+  // Saves the class, then the class tabs. The tabs are only saved once the class itself is safe,
+  // so a tab never points at a class that isn't there. Returns true if it all worked;
+  // if the device is full, the teacher is told (and success messages wait until that is read).
+  let saveTimer = null;
+  async function saveNow() {
+    clearTimeout(saveTimer); saveTimer = null;
+    const entry = meta.classes.find(c => c.id === state.id);
+    if (entry) { entry.name = state.className; entry.count = state.students.length; }
+    meta.current = state.id;
+    try { await STORE.putClass(state); await STORE.putMeta(meta); return true; }
+    catch (e) { toast(t('storageFull'), 7000, true); return false; }
+  }
+  function save() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 250); renderClassTabs(); }
+  // leaving or hiding the page (closing the laptop, switching apps): save straight away
+  const flush = () => { if (saveTimer) saveNow(); };
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+
+  // ---------- helpers ----------
+  const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  function colorFor(name) {
+    let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return COLORS[h % COLORS.length];
+  }
+  function initials(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  }
+  function nameFromFile(fname) {
+    let n = fname.replace(/\.[^.]+$/, '').replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!n || /^(img|dsc|image|photo|pxl|screenshot)\s?\d*/i.test(n) && /\d{3,}/.test(n)) return '';
+    // capital at the start of each word only; \b doesn't know accented letters ("josé peña" → "José Peña")
+    return n.normalize('NFC').replace(/(^|[^\p{L}\p{M}\p{N}'’])(\p{L})/gu, (m, before, c) => before + c.toUpperCase()).slice(0, 40);
+  }
+  function avatarEl(s) {
+    if (s.photo) {
+      const img = document.createElement('img');
+      img.src = s.photo; img.alt = s.name; img.draggable = false;
+      return img;
+    }
+    const d = document.createElement('div');
+    d.className = 'initials';
+    d.style.background = colorFor(s.name || '?');
+    d.textContent = initials(s.name || '?');
+    return d;
+  }
+  // important messages (device full) stay up for their whole time; ordinary ones wait their turn
+  let toastTimer, importantUntil = 0;
+  function toast(msg, ms = 2800, important = false) {
+    if (!important && Date.now() < importantUntil) return;
+    if (important) importantUntil = Date.now() + ms;
+    els.toast.textContent = msg; els.toast.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => els.toast.hidden = true, ms);
+  }
+
+  // Confirmation pop-up. Resolves true if the teacher confirms, false if they cancel,
+  // press Esc or click outside. For risky actions Cancel has the focus, so Enter is safe.
+  // With `input`, it shows a text box and resolves the typed text (or null if cancelled).
+  function confirmBox({ title, text, ok, danger = false, student = null, input = null }) {
+    return new Promise(resolve => {
+      const box = $('confirm'), okBtn = $('cfOk'), cancelBtn = $('cfCancel'), pic = $('cfPic'), field = $('cfInput');
+      $('cfTitle').textContent = title;
+      $('cfText').textContent = text;
+      okBtn.textContent = ok;
+      okBtn.className = 'btn ' + (danger ? 'solid-danger' : 'primary');
+      pic.innerHTML = ''; pic.hidden = !student;
+      if (student) pic.append(avatarEl(student));
+      field.hidden = !input;
+      if (input) { field.value = input.value || ''; field.placeholder = input.placeholder || ''; field.setAttribute('aria-label', title); }
+      const before = document.activeElement;
+      box.hidden = false;
+      if (input) { field.focus(); field.select(); } else (danger ? cancelBtn : okBtn).focus();
+      const stops = input ? [field, cancelBtn, okBtn] : [cancelBtn, okBtn];
+      const onKey = e => {
+        if (e.key === 'Escape') { e.preventDefault(); done(false); }
+        else if (e.key === 'Enter' && input && document.activeElement === field) { e.preventDefault(); done(true); }
+        else if (e.key === 'Tab') {
+          e.preventDefault();
+          const i = stops.indexOf(document.activeElement);
+          stops[(i + (e.shiftKey ? stops.length - 1 : 1)) % stops.length].focus();
+        }
+      };
+      function done(answer) {
+        if (input) {
+          const v = field.value.trim();
+          if (answer && !v) { field.focus(); return; } // a class needs a name
+          answer = answer ? v : null;
+        }
+        box.hidden = true;
+        document.removeEventListener('keydown', onKey, true);
+        okBtn.onclick = cancelBtn.onclick = box.onclick = null;
+        if (before && before.isConnected) before.focus();
+        resolve(answer);
+      }
+      document.addEventListener('keydown', onKey, true);
+      okBtn.onclick = () => done(true);
+      cancelBtn.onclick = () => done(false);
+      box.onclick = e => { if (e.target === box) done(false); };
+    });
+  }
+
+  // Shrink each photo to a small square so a whole class fits in browser storage.
+  function resizeImage(file, size = 360) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - s) / 2;
+        const sy = Math.max(0, (img.naturalHeight - s) / 2 - (img.naturalHeight - s) * 0.15); // bias up toward faces
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
+  async function addPhotos(files) {
+    const imgs = [...files].filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|heic|bmp)$/i.test(f.name));
+    if (!imgs.length) { toast(t('notPictures')); return; }
+    const skipped = files.length - imgs.length;   // not pictures (a PDF, a Word file...)
+    const tooBig = imgs.filter(f => f.size > MAX_PHOTO);
+    if (tooBig.length === imgs.length) { toast(t('tooBig', { n: tooBig.length }), 6000); return; }
+    let added = 0, failed = 0;
+    for (const f of imgs.filter(f => f.size <= MAX_PHOTO)) {
+      try {
+        const photo = await resizeImage(f);
+        const name = nameFromFile(f.name) || t('studentN', { n: state.students.length + 1 });
+        state.students.push({ id: uid(), name, photo, picked: false });
+        added++;
+      } catch (e) { failed++; }
+    }
+    render();
+    if (!(await saveNow())) return;
+    let msg = t('added', { n: added });
+    if (tooBig.length) msg += ' ' + t('tooBig', { n: tooBig.length });
+    if (failed) msg += ' ' + t('photosFailed', { n: failed });
+    if (skipped) msg += ' ' + t('skippedFiles', { n: skipped });
+    if (!tooBig.length && !failed && !skipped) msg += ' ' + t('fixSpelling');
+    toast(msg, tooBig.length || failed || skipped ? 7000 : 4000);
+  }
+
+  // ---------- classes ----------
+  function renderClassTabs() {
+    const box = $('classTabs'); box.innerHTML = '';
+    for (const c of meta.classes) {
+      const live = c.id === state.id;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'class-tab'; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', live ? 'true' : 'false');
+      const nm = document.createElement('span'); nm.className = 'nm';
+      nm.textContent = (live ? state.className : c.name) || t('myClass');
+      const ct = document.createElement('span'); ct.className = 'ct';
+      ct.textContent = live ? state.students.length : c.count;
+      b.setAttribute('aria-label', t('classTab', { name: nm.textContent, n: ct.textContent }));
+      b.append(nm, ct);
+      b.onclick = () => switchClass(c.id);
+      box.append(b);
+    }
+  }
+  async function switchClass(id) {
+    if (id === state.id) return;
+    await saveNow();
+    const c = await STORE.getClass(id);
+    if (!c) return;
+    state = c;
+    render();
+    if (await saveNow()) toast(t('switchedClass', { cls: state.className }));
+  }
+  $('addClassBtn').onclick = async () => {
+    const name = await confirmBox({
+      title: t('newClassTitle'), text: t('newClassText'), ok: t('newClassOk'),
+      input: { value: '', placeholder: t('newClassPlaceholder') }
+    });
+    if (!name) return;
+    if (!(await saveNow())) return;
+    const before = state;
+    const c = STORE.blankClass(name);
+    // a new class starts with the same Spin Time settings as the one before
+    Object.assign(c, { lang: state.lang, theme: state.theme, sound: state.sound, noRepeat: state.noRepeat });
+    meta.classes.push({ id: c.id, name: c.className, count: 0 });
+    state = c;
+    if (!(await saveNow())) {   // nothing was saved: go back to the class we were on
+      meta.classes = meta.classes.filter(x => x.id !== c.id); state = before; meta.current = before.id;
+      render(); return;
+    }
+    render();
+    toast(t('newClassAdded', { cls: name }), 4500);
+  };
+  $('deleteClassBtn').onclick = async () => {
+    const name = state.className || t('myClass');
+    const yes = await confirmBox({
+      title: t('deleteClassTitle', { cls: name }),
+      text: t('deleteClassText', { cls: name, n: state.students.length }),
+      ok: t('deleteClassBtn'), danger: true
+    });
+    if (!yes) return;
+    clearTimeout(saveTimer);
+    await STORE.deleteClass(state.id);
+    meta.classes = meta.classes.filter(c => c.id !== state.id);
+    if (!meta.classes.length) {
+      const fresh = STORE.blankClass();
+      meta.classes.push({ id: fresh.id, name: fresh.className, count: 0 });
+      state = fresh;
+    } else {
+      state = (await STORE.getClass(meta.classes[0].id)) || STORE.blankClass();
+    }
+    const ok = await saveNow();
+    render();
+    if (ok) toast(t('classDeleted', { cls: name }));
+  };
+
+  // ---------- rendering ----------
+  function render() {
+    $('optLang').value = state.lang || 'en';
+    els.className.value = state.className;
+    els.optSound.checked = state.sound;
+    document.title = (state.className ? state.className + ' · ' : '') + 'Class Name Picker';
+    renderClassTabs();
+    renderRoster();
+    renderCounter();
+  }
+
+  function renderCounter() {
+    const total = state.students.length;
+    els.rosterTitle.textContent = total ? t('studentsCount', { n: total }) : t('students');
+    els.goBtn.setAttribute('aria-disabled', total ? 'false' : 'true');
+    $('goGroups').setAttribute('aria-disabled', total >= 2 ? 'false' : 'true');
+  }
+
+  // ---------- Group Time ----------
+  $('goGroups').onclick = async e => {
+    e.preventDefault();
+    if (state.students.length < 2) { toast(t('groupsNeedTwo')); return; }
+    state.groups = null; state.groupLabels = null; state.groupLabelIdx = null;   // a new Group Time starts with fresh groups
+    await saveNow();
+    location.href = 'groups.html';
+  };
+
+  function renderRoster() {
+    els.roster.innerHTML = '';
+    if (!state.students.length) {
+      els.roster.style.display = 'block';
+      els.roster.innerHTML = `
+        <div class="empty">
+          <h3>${t('emptyTitle')}</h3>
+          <p>${t('emptyText1')}</p>
+          <p>${t('emptyText2')}</p>
+          <div class="row"><button class="btn" type="button" id="sampleBtn">${t('trySample')}</button></div>
+        </div>`;
+      $('sampleBtn').onclick = () => {
+        state.students = SAMPLE.map(name => ({ id: uid(), name, photo: null, picked: false }));
+        render(); saveNow().then(ok => { if (ok) toast(t('sampleAdded')); });
+      };
+      return;
+    }
+    els.roster.style.display = '';
+    for (const s of state.students) {
+      const card = document.createElement('div');
+      card.className = 'card' + (s.photo ? '' : ' nophoto');
+      card.dataset.id = s.id;
+
+      const pic = document.createElement('div'); pic.className = 'pic';
+      pic.append(avatarEl(s));
+      const swap = document.createElement('label'); swap.className = 'swap';
+      swap.title = s.photo ? t('changePhoto') : t('addPhoto');
+      swap.setAttribute('aria-label', (s.photo ? t('changePhoto') : t('addPhoto')) + ': ' + (s.name || t('thisStudent')));
+      swap.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#1D2742" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*';
+      fi.setAttribute('aria-label', t('photoFor', { name: s.name }));
+      fi.onchange = async () => {
+        if (!fi.files[0]) return;
+        if (fi.files[0].size > MAX_PHOTO) { toast(t('tooBig', { n: 1 }), 6000); fi.value = ''; return; }
+        try { s.photo = await resizeImage(fi.files[0]); save(); render(); }
+        catch (e) { toast(t('photoFailed')); }
+      };
+      swap.append(fi); pic.append(swap);
+
+      const nm = document.createElement('input');
+      nm.className = 'nm'; nm.value = s.name; nm.maxLength = 40;
+      nm.setAttribute('aria-label', t('nameFor', { name: s.name || t('thisStudent') }));
+      // an empty box is never saved: the old name stays until a new one is typed
+      nm.oninput = () => {
+        if (!nm.value.trim()) return;
+        s.name = nm.value; save(); updateDupes();
+        if (!s.photo) { const a = pic.querySelector('.initials'); a.textContent = initials(s.name); a.style.background = colorFor(s.name || '?'); }
+      };
+      nm.onblur = () => {
+        if (!nm.value.trim()) nm.value = s.name;
+        else if (nm.value !== nm.value.trim()) { nm.value = s.name = nm.value.trim(); save(); }
+        nm.setAttribute('aria-label', t('nameFor', { name: s.name }));
+        rm.title = t('remove', { name: s.name }); rm.setAttribute('aria-label', rm.title);
+      };
+      nm.onkeydown = e => { if (e.key === 'Enter') nm.blur(); };
+
+      const rm = document.createElement('button');
+      rm.className = 'rm'; rm.type = 'button'; rm.title = t('remove', { name: s.name });
+      rm.setAttribute('aria-label', t('remove', { name: s.name }));
+      rm.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#E8467C" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      rm.onclick = async () => {
+        const who = s.name.trim() || t('thisStudent');
+        const yes = await confirmBox({
+          title: t('removeTitle', { name: who }), text: t('removeText', { name: who }),
+          ok: t('removeBtn', { name: who }), danger: true, student: s
+        });
+        if (!yes) return;
+        state.students = state.students.filter(x => x.id !== s.id);
+        render(); if (await saveNow()) toast(t('removed', { name: who }));
+      };
+
+      card.append(pic, nm, rm);
+      if (s.picked && state.noRepeat) {
+        const b = document.createElement('span'); b.className = 'badge'; b.textContent = t('hadTurn');
+        card.append(b);
+      }
+      els.roster.append(card);
+    }
+    updateDupes();
+  }
+
+  // Two students with the same name look identical on the wheel, so point them out.
+  // Runs while typing too, without redrawing the cards (which would lose the cursor).
+  function updateDupes() {
+    const key = n => (n || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const groups = new Map();
+    for (const s of state.students) {
+      const k = key(s.name); if (!k) continue;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(s);
+    }
+    const dupIds = new Set();
+    const dupNames = [];
+    for (const list of groups.values()) {
+      if (list.length > 1) { list.forEach(s => dupIds.add(s.id)); dupNames.push({ name: list[0].name.trim(), count: list.length }); }
+    }
+    els.roster.querySelectorAll('.card').forEach(card => {
+      const isDup = dupIds.has(card.dataset.id);
+      card.classList.toggle('dup', isDup);
+      let note = card.querySelector('.dup-note');
+      if (isDup && !note) {
+        note = document.createElement('div'); note.className = 'dup-note'; note.textContent = t('dupNote');
+        card.querySelector('input.nm').after(note);
+      } else if (!isDup && note) note.remove();
+    });
+
+    const warn = $('dupWarn');
+    warn.hidden = !dupNames.length;
+    if (!dupNames.length) return;
+    const first = dupNames[0].name.split(' ')[0];
+    const list = dupNames.map(d => `<b>${t('dupGroup', { n: d.count, name: escapeHtml(d.name) })}</b>`).join(', ');
+    warn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#C47A0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.5v.01"/></svg>
+      <div>
+        <p>${t('dupLine1', { list })}</p>
+        <p>${t('dupLine2', { a: `<b>${escapeHtml(first)} S</b>`, b: `<b>${escapeHtml(first)} G</b>` })}</p>
+      </div>`;
+  }
+  function escapeHtml(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  // ---------- events ----------
+  els.className.oninput = () => { state.className = els.className.value; document.title = (state.className ? state.className + ' · ' : '') + 'Class Name Picker'; save(); };
+  els.className.onkeydown = e => { if (e.key === 'Enter') els.className.blur(); };
+  $('renameBtn').onclick = () => { els.className.focus(); els.className.select(); };
+
+  els.optSound.onchange = () => { state.sound = els.optSound.checked; save(); };
+
+  // Language of the children's screens (Spin Time and Group Time); this screen stays in English.
+  for (const l of LANG.list) {
+    const o = document.createElement('option'); o.value = l.code; o.textContent = l.name; $('optLang').append(o);
+  }
+  $('optLang').onchange = async () => {
+    state.lang = $('optLang').value;
+    const name = LANG.list.find(l => l.code === state.lang).name;
+    if (await saveNow()) toast(`Spin Time and Group Time will be in ${name}.`);
+  };
+
+  // Make sure everything is saved before Spin Time opens.
+  els.goBtn.onclick = async e => {
+    e.preventDefault();
+    if (!state.students.length) { toast(t('addFirst')); return; }
+    await saveNow();
+    location.href = 'spin.html';
+  };
+
+  $('photoInput').onchange = e => { addPhotos(e.target.files); e.target.value = ''; };
+  for (const id of ['addPhotosBtn', 'importBtn']) {
+    $(id).onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $(id).click(); } };
+  }
+
+  $('addNameForm').onsubmit = async e => {
+    e.preventDefault();
+    const inp = $('newName');
+    const typed = inp.value.split(',').map(n => n.trim()).filter(Boolean);
+    if (!typed.length) return;
+    const names = typed.map(n => n.slice(0, 40).trim());
+    const cut = typed.some(n => n.length > 40);
+    for (const name of names) state.students.push({ id: uid(), name, photo: null, picked: false });
+    inp.value = ''; render();
+    if (!(await saveNow())) return;
+    toast((names.length > 1 ? t('added', { n: names.length }) : t('addedOne', { name: names[0] })) + (cut ? ' ' + t('namesCut') : ''), cut ? 6000 : 2800);
+  };
+
+  // Remove all
+  els.clearBtn.onclick = async () => {
+    if (!state.students.length) return;
+    const yes = await confirmBox({
+      title: t('removeAllTitle', { n: state.students.length }),
+      text: t('removeAllText', { cls: state.className || t('myClass') }),
+      ok: t('removeAllBtn'), danger: true
+    });
+    if (!yes) return;
+    state.students = []; state.history = []; render();
+    if (await saveNow()) toast(t('allRemoved'));
+  };
+
+  // Backup
+  // keeps letters like ñ and é (same rule as the Group Time file name)
+  const backupFileName = () => ((state.className || '').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim().replace(/\s+/g, '-') || 'class') + '-backup.json';
+  $('exportBtn').onclick = async () => {
+    const yes = await confirmBox({
+      title: t('saveTitle'),
+      text: t('saveText', { file: backupFileName(), n: state.students.length }),
+      ok: t('saveBackup')
+    });
+    if (!yes) return;
+    await saveNow();   // even if this device is full, the backup file still gets everything
+    const { id, ...cls } = state;
+    const blob = new Blob([JSON.stringify({ app: 'class-name-picker', version: 1, ...cls })], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = backupFileName();
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast(t('backupSaved'));
+  };
+  // A backup file could come from anywhere, so only known settings are taken, each checked;
+  // names are cut to 40 letters, photos must be pictures, and every student gets a new id.
+  const text40 = v => (typeof v === 'string' || typeof v === 'number') ? String(v).trim().slice(0, 40) : '';
+  const isTheme = v => typeof v === 'string' && THEMES.list.some(th => th.key === v);
+  function readBackup(data) {
+    if (!data || typeof data !== 'object' || !Array.isArray(data.students)) throw new Error('no students');
+    const newId = new Map();
+    const students = data.students.filter(s => s && typeof s === 'object').map((s, i) => {
+      const id = uid();
+      if (s.id != null && !newId.has(String(s.id))) newId.set(String(s.id), id);
+      const photo = typeof s.photo === 'string' && s.photo.startsWith('data:image/') ? s.photo : null;
+      return { id, name: text40(s.name) || t('studentN', { n: i + 1 }), photo, picked: s.picked === true };
+    });
+    const out = { className: text40(data.className) || 'My Class', students };
+    out.history = Array.isArray(data.history) ? data.history.map(x => newId.get(String(x))).filter(Boolean) : [];
+    if (typeof data.noRepeat === 'boolean') out.noRepeat = data.noRepeat;
+    if (typeof data.sound === 'boolean') out.sound = data.sound;
+    if (typeof data.quickSpin === 'boolean') out.quickSpin = data.quickSpin;
+    if (LANG.list.some(l => l.code === data.lang)) out.lang = data.lang;
+    for (const k of ['theme', 'spinTheme', 'groupTheme']) if (isTheme(data[k])) out[k] = data[k];
+    if (data.groupMode === 'count' || data.groupMode === 'size') out.groupMode = data.groupMode;
+    if (Number.isInteger(data.groupNum) && data.groupNum >= 1 && data.groupNum <= 50) out.groupNum = data.groupNum;
+    if (['numbers', 'animals', 'fruits', 'space', 'heroes'].includes(data.groupNameStyle)) out.groupNameStyle = data.groupNameStyle;
+    if (data.groupAnim === 'boom' || data.groupAnim === 'trains') out.groupAnim = data.groupAnim;
+    return out;
+  }
+  $('importInput').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    let got;
+    try { got = readBackup(JSON.parse(await f.text())); } catch (err) { toast(t('notBackup')); return; }
+    // a backup comes in as its own class; an empty class is filled instead of adding another
+    const asNew = state.students.length > 0;
+    const before = state;
+    if (asNew) {
+      if (!(await saveNow())) return;
+      state = STORE.blankClass();
+      meta.classes.push({ id: state.id, name: '', count: 0 });
+    }
+    Object.assign(state, got, { groups: null, groupLabels: null, groupLabelIdx: null });
+    if (!(await saveNow())) {
+      if (asNew) { meta.classes = meta.classes.filter(c => c.id !== state.id); state = before; meta.current = before.id; }
+      render(); return;
+    }
+    render();
+    toast(t(asNew ? 'backupAdded' : 'backupOpened', { cls: state.className, n: state.students.length }));
+  };
+
+  // Drag and drop photos anywhere
+  let dragDepth = 0;
+  const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; els.dropzone.hidden = false; });
+  window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) els.dropzone.hidden = true; });
+  window.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; els.dropzone.hidden = true;
+    addPhotos(e.dataTransfer.files);
+  });
+
+  // ---------- install as an app + offline ----------
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  const installBtn = $('installBtn');
+  const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let installEvent = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); installEvent = e;
+    if (!installed()) installBtn.hidden = false;
+  });
+  window.addEventListener('appinstalled', () => {
+    installBtn.hidden = true; installEvent = null;
+    toast(t('installed'), 5000);
+  });
+  if (isIOS && !installed()) installBtn.hidden = false;
+  installBtn.onclick = async () => {
+    if (installEvent) {
+      installEvent.prompt();
+      try { await installEvent.userChoice; } catch (e) {}
+      installEvent = null;
+    } else if (isIOS) {
+      toast(t('iosInstall'), 7000);
+    }
+  };
+
+  // Coming back from Spin Time: pick up who has had a turn.
+  window.addEventListener('pageshow', async e => { if (e.persisted) { await load(); render(); } });
+
+  load().then(render);
+})();
+</script>
+</body>
+</html>

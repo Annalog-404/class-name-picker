@@ -1,0 +1,37 @@
+{
+  "id": "./",
+  "name": "Class Name Picker",
+  "short_name": "Name Picker",
+  "description": "Free classroom tool for Grade 1 teachers: a name wheel for recitation and a fun group maker. Works offline. No accounts, no ads, no tracking; class lists and photos stay on the device.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EAF4FF",
+  "theme_color": "#FFC83D",
+  "categories": [
+    "education",
+    "kids",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

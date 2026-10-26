@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Security: the browser may only load this app's own files and may not contact any other website -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Spin Time</title>
+<meta name="theme-color" content="#7FCBFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+/* Andika: school-style "a" and "g" for early readers. Bundled so it works offline. */
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Children's screen: one big name wheel for recitation, no editing. Fits one screen for a projector or tablet. */
+:root {
+  --sky-top: #7FCBFF;
+  --sky-bottom: #C9B8FF;
+  --ink: #1D2742;
+  --white: #FFFFFF;
+  --sun: #FFC83D;
+  --sun-deep: #E9A800;
+  --berry: #E8467C;
+  --leaf: #23A86A;
+  --sky: #2F7BEA;
+  --grape: #7558F0;
+  --font-display: "Andika", "Century Gothic", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; color: var(--ink);
+  font-family: var(--font-display);
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 4px solid var(--white); outline-offset: 3px; }
+
+/* floating background shapes (balloons, numbers, stars...), set by the teacher's theme in themes.js */
+.balloons { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.balloons .balloon {
+  position: absolute; bottom: -120px; width: 70px; height: 84px; border-radius: 50% 50% 48% 48%;
+  opacity: .35; animation: rise linear infinite;
+}
+.balloons .balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 50px; background: rgba(255,255,255,.7); }
+@keyframes rise { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(calc(-100vh - 260px)) rotate(4deg); } }
+.balloons .floaty {
+  position: absolute; bottom: -110px; opacity: .45; display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 900; line-height: 1;
+  animation: drift linear infinite;
+}
+.balloons .floaty svg { width: 100%; height: 100%; display: block; }
+@keyframes drift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(calc(-100vh - 240px)) rotate(var(--turn, 20deg)); } }
+
+.screen {
+  position: relative; z-index: 1; height: 100%;
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+.top { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+.title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.title img { width: 42px; height: 42px; border-radius: 12px; box-shadow: 0 3px 0 var(--sun-deep); }
+.title h1 {
+  margin: 0; font-size: clamp(20px, 3.2vw, 32px); font-weight: 900; color: var(--on-sky, #fff);
+  text-shadow: 0 3px 0 var(--on-sky-shadow, rgba(29,39,66,.25)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.corner {
+  border: none; border-radius: 14px; background: rgba(255,255,255,.35); color: var(--ink);
+  font-weight: 800; font-size: 14px; padding: 9px 12px; display: inline-flex; align-items: center; gap: 6px;
+  position: relative; overflow: hidden;
+}
+.corner svg { width: 18px; height: 18px; }
+@media (max-width: 520px) { #fsLbl, #setLbl { display: none; } }
+/* phones: icons only, a short Teacher label, so the class name still has room */
+.corner .short { display: none; }
+@media (max-width: 480px) {
+  .top { gap: 6px; }
+  .title img { display: none; }
+  .title h1 { font-size: 20px; }
+  .corner { padding: 9px 10px; }
+  .corner .long { display: none; }
+  .corner .short { display: inline; }
+}
+.corner:disabled { opacity: .45; cursor: default; }
+.set-panel {
+  position: fixed; z-index: 40; top: calc(max(12px, env(safe-area-inset-top, 0px)) + 60px); right: max(16px, env(safe-area-inset-right, 0px));
+  width: min(340px, calc(100vw - 32px)); background: var(--white); border-radius: 18px; padding: 14px;
+  box-shadow: 0 12px 30px rgba(29,39,66,.25); display: flex; flex-direction: column; gap: 12px; font-size: 16px;
+}
+.sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 800; }
+.sp-row select { border: 2px solid #D5E1F0; border-radius: 10px; font: inherit; font-weight: 800; padding: 6px 8px; background: #fff; max-width: 60%; }
+.sp-check { justify-content: flex-start; font-weight: 700; line-height: 1.3; }
+.sp-check input { width: 22px; height: 22px; accent-color: #23A86A; flex: none; }
+.sp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 2px solid #D5E1F0; background: #fff;
+  border-radius: 12px; padding: 9px 12px; font-weight: 800;
+}
+.sp-btn svg { width: 18px; height: 18px; }
+.sp-btn:hover { background: #F1F6FC; }
+.corner .fill { position: absolute; inset: 0; background: rgba(255,255,255,.75); transform-origin: left; transform: scaleX(0); }
+.corner span.lbl, .corner svg { position: relative; }
+
+.main { flex: 1; min-height: 0; display: flex; gap: 16px; }
+.stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.wheel-wrap { position: relative; width: min(calc(100vw - 340px), calc(100vh - 190px), 760px); aspect-ratio: 1; max-width: 100%; }
+.wheel-wrap { transition: transform 1.2s ease; }
+.wheel-wrap.suspense { transform: scale(1.04); }
+@supports (height: 100dvh) { .wheel-wrap { width: min(calc(100vw - 340px), calc(100dvh - 190px), 760px); } }
+
+/* Already called: a side panel on wide screens, a strip under the wheel on tall or narrow ones */
+.called {
+  width: 280px; flex: none; align-self: stretch; display: flex; flex-direction: column; gap: 10px;
+  background: rgba(255,255,255,.82); border-radius: 26px; padding: 14px; min-height: 0;
+  box-shadow: 0 8px 0 rgba(29,39,66,.12);
+}
+.called h2 { margin: 0; font-size: 22px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.called h2 .count { background: var(--leaf); color: #fff; border-radius: 999px; font-size: 15px; padding: 2px 10px; font-variant-numeric: tabular-nums; }
+#calledList { list-style: none; margin: 0; padding: 2px; flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+#calledList li {
+  display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: 18px;
+  padding: 6px 12px 6px 6px; border: 3px solid transparent; flex: none;
+}
+/* the newest name always wears a sun-coloured ring, so children can find who was just called */
+#calledList li.latest { border-color: var(--sun); box-shadow: 0 0 0 3px var(--sun); background: #FFF8E1; }
+#calledList li.fresh { animation: slidein .5s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes slidein { from { transform: translateY(14px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+#calledList .num {
+  width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--ink); color: #fff;
+  display: grid; place-items: center; font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums;
+}
+#calledList .face { width: 46px; height: 46px; flex: none; border-radius: 50%; overflow: hidden; border: 3px solid #F1F6FC; }
+#calledList .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#calledList .face .initials { font-size: 18px; }
+#calledList .nm { font-size: 21px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.called-empty { margin: 0; font-family: var(--font-display); font-size: 15px; line-height: 1.45; color: #4A5577; }
+
+/* lots of names: two tighter columns so more fit without scrolling */
+.called.compact #calledList { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 6px; }
+.called.compact #calledList li { padding: 4px 8px 4px 4px; gap: 6px; border-radius: 14px; border-width: 2px; min-width: 0; }
+.called.compact #calledList .num { width: 20px; height: 20px; font-size: 11px; }
+.called.compact #calledList .face { width: 30px; height: 30px; border-width: 2px; }
+.called.compact #calledList .face .initials { font-size: 13px; }
+.called.compact #calledList .nm { font-size: 18px; }
+.called.compact #calledList li.latest { box-shadow: 0 0 0 2px var(--sun); }
+.called.compact { width: 360px; }
+
+@media (max-aspect-ratio: 5/4), (max-width: 760px) {
+  .called.compact { width: auto; }
+  .called.compact #calledList { display: flex; }
+  .main { flex-direction: column; gap: 10px; }
+  .wheel-wrap { width: min(92vw, calc(100vh - 330px), 760px); }
+  @supports (height: 100dvh) { .wheel-wrap { width: min(92vw, calc(100dvh - 330px), 760px); } }
+  .called { width: auto; flex-direction: row; align-items: center; padding: 10px 12px; border-radius: 22px; }
+  .called h2 { flex-direction: column; font-size: 16px; text-align: center; flex: none; gap: 4px; line-height: 1.1; }
+  #calledList { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 4px; }
+  #calledList li { padding: 4px 12px 4px 4px; }
+  #calledList .face { width: 40px; height: 40px; }
+  #calledList .nm, .called.compact #calledList .nm { font-size: 18px; }
+}
+#wheel { width: 100%; height: 100%; display: block; border-radius: 50%; filter: drop-shadow(0 14px 0 rgba(29,39,66,.18)); cursor: pointer; }
+.pointer {
+  position: absolute; left: 50%; top: -8%; width: 13%; transform: translateX(-50%); transform-origin: 50% 36%; overflow: visible;
+  filter: drop-shadow(0 4px 0 rgba(29,39,66,.25)); pointer-events: none; z-index: 2;
+}
+.pointer.flick { animation: flick .12s ease-out; }
+@keyframes flick { 0% { transform: translateX(-50%) rotate(0); } 40% { transform: translateX(-50%) rotate(-16deg); } 100% { transform: translateX(-50%) rotate(0); } }
+#hub {
+  position: absolute; left: 50%; top: 50%; width: 24%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; border: 6px solid var(--white); background: var(--sun); color: var(--ink);
+  font-weight: 900; font-size: clamp(18px, 4.2vmin, 40px); letter-spacing: .04em;
+  box-shadow: 0 6px 0 var(--sun-deep), inset 0 -6px 0 rgba(0,0,0,.08); z-index: 2;
+  transition: transform .1s ease;
+}
+#hub:hover { transform: translate(-50%, -50%) scale(1.05); }
+#hub:active { transform: translate(-50%, -50%) scale(.96); }
+#hub:disabled { cursor: default; }
+#hub.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.08); } }
+
+/* helper words sit in a solid pill so they read on every theme, pale or dark */
+.hint {
+  font-size: clamp(24px, 2.6vw, 32px); font-weight: 800; color: #1D2742; text-align: center; line-height: 1.25;
+  background: rgba(255,255,255,.9); border-radius: 999px; padding: 6px 22px; box-shadow: 0 4px 0 rgba(29,39,66,.12); max-width: 100%;
+}
+.now.suspense { animation: throb .55s ease-in-out infinite alternate; box-shadow: 0 0 0 4px var(--sun), 0 5px 0 rgba(29,39,66,.15); }
+@keyframes throb { to { transform: scale(1.08); } }
+/* who the pointer is on right now: big while the wheel spins */
+.now {
+  display: flex; align-items: center; gap: 14px; background: var(--white); border-radius: 999px;
+  padding: 6px 28px 6px 6px; box-shadow: 0 5px 0 rgba(29,39,66,.15); max-width: 100%;
+}
+.now .face { width: 64px; height: 64px; flex: none; border-radius: 50%; overflow: hidden; border: 4px solid var(--sun); }
+.now .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.now .face .initials { font-size: 26px; }
+.now .nm { font-size: clamp(28px, 4vw, 40px); font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; display: inline-block; }
+.now .nm.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: scale(1.12); } }
+.left-count { display: inline-block; background: #E6F0FF; color: var(--ink); border-radius: 999px; padding: 2px 14px; font-size: .8em; margin-left: 6px; }
+/* shown only if this device could not save (for the teacher) */
+.save-note {
+  position: fixed; left: 50%; transform: translateX(-50%); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 58px);
+  z-index: 45; width: max-content; max-width: min(460px, calc(100vw - 24px)); pointer-events: none;   /* under the top bar, never over a button */
+  background: #FFF4DE; color: #1D2742; border: 2px solid #F5C46B; border-radius: 12px; padding: 6px 12px; font-size: 14px; font-weight: 700;
+}
+
+/* Messages in place of the wheel */
+.message {
+  background: var(--white); border-radius: 32px; padding: 32px 28px; text-align: center; max-width: 560px;
+  box-shadow: 0 10px 0 rgba(29,39,66,.15); display: flex; flex-direction: column; gap: 14px; align-items: center;
+}
+.message h2 { margin: 0; font-size: clamp(28px, 5vw, 44px); font-weight: 900; text-wrap: balance; }
+.message p { margin: 0; font-family: var(--font-display); font-size: 17px; line-height: 1.5; color: #4A5577; }
+.big-btn {
+  border: none; border-radius: 999px; background: var(--sun); color: var(--ink); font-weight: 900;
+  font-size: clamp(22px, 3.4vw, 30px); padding: 14px 36px; box-shadow: 0 6px 0 var(--sun-deep);
+}
+.big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--sun-deep); }
+
+/* Reveal */
+#reveal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(20,28,52,.6); padding: 16px; }
+.reveal-card {
+  background: var(--white); border-radius: 36px; padding: clamp(16px, 3vw, 30px);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+  width: min(640px, 100%); max-height: 100%; overflow: auto;
+  animation: pop .55s cubic-bezier(.2,1.6,.4,1) both;
+}
+@keyframes pop { from { transform: scale(.5) rotate(-6deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+.reveal-card .eyebrow { font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.1; color: var(--berry); }
+.reveal-photo {
+  width: min(400px, 52vh, 78vw); aspect-ratio: 1; max-width: 100%; border-radius: 50%; padding: 12px;
+  background: conic-gradient(from 90deg, var(--sun), var(--berry), var(--grape), var(--sky), var(--leaf), var(--sun));
+  animation: spinring 6s linear infinite;
+}
+.reveal-photo > div { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #F1F6FC; border: 6px solid var(--white); animation: spinring 6s linear infinite reverse; }
+@keyframes spinring { to { transform: rotate(360deg); } }
+.reveal-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.initials { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: clamp(80px, 16vw, 150px); }
+#revealName { font-weight: 900; font-size: clamp(44px, 9vw, 84px); line-height: 1.05; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+
+#confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; width: 100%; height: 100%; }
+
+/* "Start a new round?" check, so one tap can't wipe the round by accident */
+.confirm-back { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(29,39,66,.55); }
+.confirm-card {
+  background: #fff; border-radius: 26px; padding: 24px; width: min(480px, 100%); text-align: center;
+  display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgba(29,39,66,.3);
+}
+.confirm-card h3 { margin: 0; font-size: 28px; font-weight: 900; }
+.confirm-card p { margin: 0; color: #4A5577; font-size: 18px; line-height: 1.45; }
+.cf-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.cf-actions button { min-width: 130px; font-size: 18px; }
+.cf-ok { border: none; background: var(--sun); color: var(--ink); border-radius: 12px; padding: 10px 16px; font-weight: 900; box-shadow: 0 4px 0 var(--sun-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+  .now .nm.bump,
+  .now.suspense, .balloons span, #hub.pulse, .reveal-photo, .reveal-photo > div, .reveal-card, .pointer.flick { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="balloons" id="balloons" aria-hidden="true"></div>
+
+<div class="screen">
+  <div class="top">
+    <div class="title">
+      <img src="icons/icon-192.png" alt="">
+      <h1 id="classTitle">Spin Time</h1>
+    </div>
+    <button class="corner" id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+      <span class="lbl" id="setLbl" data-t="settings">Settings</span>
+    </button>
+    <button class="corner" id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen with the wheel (press Esc to leave)">
+      <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      <span class="lbl" id="fsLbl" data-t="fullScreen">Full screen</span>
+    </button>
+    <button class="corner" id="teacherBtn" type="button" data-t-title="teacherTip" title="Press and hold to go back to Teacher setup">
+      <span class="fill" id="teacherFill"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <span class="lbl long" id="teacherLbl" data-t="holdTeacher">Hold for Teacher</span>
+      <span class="lbl short" id="teacherShort" data-t="teacherShort">Teacher</span>
+    </button>
+  </div>
+
+  <div class="main">
+  <div class="stage" id="stage">
+    <div class="wheel-wrap" id="wheelWrap">
+      <svg class="pointer" id="pointer" viewBox="0 0 60 84" aria-hidden="true">
+        <path d="M30 80 L9.2 42 A24 24 0 1 1 50.8 42 Z" fill="#E8467C" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="30" cy="30" r="8.5" fill="#fff"/>
+      </svg>
+      <canvas id="wheel" aria-label="Name wheel"></canvas>
+      <button id="hub" type="button" class="pulse" data-t="spin">SPIN</button>
+    </div>
+    <div class="hint" id="hint">Tap the wheel to spin!</div>
+    <div class="now" id="now" hidden aria-hidden="true"><span class="face" id="nowFace"></span><span class="nm" id="nowName"></span></div>
+
+    <div class="message" id="msgDone" hidden>
+      <h2 data-t="doneTitle">Everyone had a turn!</h2>
+      <p data-t="doneText">Great job, everybody. Start again to put all the names back on the wheel.</p>
+      <button class="big-btn" id="againAll" type="button" data-t="playAgain">Play again</button>
+    </div>
+    <div class="message" id="msgEmpty" hidden>
+      <h2 data-t="noNamesTitle">No names yet</h2>
+      <p data-t="noNamesText">The teacher needs to add the class first. Press and hold the Teacher button at the top.</p>
+    </div>
+  </div>
+
+  <aside class="called" id="called" aria-label="Already called" hidden>
+    <h2><span data-t="alreadyCalled">Already called</span> <span class="count" id="calledCount">0</span></h2>
+    <ol id="calledList"></ol>
+    <p class="called-empty" id="calledEmpty" data-t="calledEmpty">Names show up here after each spin.</p>
+  </aside>
+  </div>
+</div>
+
+<!-- Spin Time's own settings: how it looks and how turns work -->
+<div class="set-panel" id="setPanel" hidden>
+  <label class="sp-row" for="spTheme"><span data-t="themeLabel">Theme</span><select id="spTheme"></select></label>
+  <label class="sp-row sp-check"><input type="checkbox" id="spNoRepeat"> <span data-t="noRepeat">Everyone gets a turn before anyone repeats</span></label>
+  <label class="sp-row sp-check"><input type="checkbox" id="spQuick"> <span data-t="quickSpin">Quick spin</span></label>
+  <button class="sp-btn" id="spNewRound" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    <span data-t="newRound">Start a new round</span>
+  </button>
+</div>
+
+<div id="reveal" hidden role="dialog" aria-modal="true" aria-labelledby="revealName">
+  <div class="reveal-card">
+    <div class="eyebrow" data-t="yourTurn">It's your turn!</div>
+    <div class="reveal-photo"><div id="revealPic"></div></div>
+    <h2 id="revealName"></h2>
+    <button class="big-btn" id="okBtn" type="button" data-t="yay">Yay!</button>
+  </div>
+</div>
+
+<div class="confirm-back" id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
+  <div class="confirm-card">
+    <h3 id="cfTitle" data-t="newRoundTitle">Start a new round?</h3>
+    <p id="cfText" data-t="newRoundText">All the names go back on the wheel and the Already called list is cleared.</p>
+    <div class="cf-actions">
+      <button type="button" class="sp-btn" id="cfCancel" data-t="cancel">Cancel</button>
+      <button type="button" class="cf-ok" id="cfOk" data-t="newRoundOk">Yes, start again</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-note" id="saveNote" hidden role="status" data-t="saveFailed">Couldn't save on this device. Teacher: save a backup soon.</div>
+
+<canvas id="confetti" hidden></canvas>
+
+<script src="lang.js"></script>
+<script src="themes.js"></script>
+<script src="store.js"></script>
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const COLORS = ['#2F7BEA', '#E8467C', '#23A86A', '#7558F0', '#F08A24', '#0EA5B7', '#D9478F', '#5E7CE2'];
+  // wheel slices: [fill, text color]
+  const SLICES = [['#FFC83D', '#1D2742'], ['#E8467C', '#fff'], ['#2F7BEA', '#fff'], ['#23A86A', '#fff'], ['#7558F0', '#fff'], ['#F08A24', '#fff'], ['#0EA5B7', '#fff']];
+
+  const $ = id => document.getElementById(id);
+  const canvas = $('wheel'), ctx = canvas.getContext('2d');
+  const hub = $('hub'), pointer = $('pointer'), hint = $('hint');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // history: ids of the students called this round, in order
+  const t = LANG.t;
+  let state = { className: 'My Class', students: [], noRepeat: true, sound: true, history: [], lang: 'en', theme: 'balloons' };
+  let paintedTheme = null;
+  let flipMemo = [];   // which names are turned the other way up (see draw)
+  let faceMemo = [];   // how much each face is turned to stand upright (see draw)
+  let pool = [];
+  let rot = 0, spinning = false, winnerIdx = -1, flashOn = false, size = 0, dpr = 1;
+  const images = new Map();
+
+  // ---------- data ----------
+  // the class the teacher picked on the teacher screen (store.js)
+  async function load() {
+    try { state = (await STORE.currentClass()).cls; } catch (e) {}
+  }
+  // if the device is full, a small note tells the teacher (the wheel keeps working)
+  function save() {
+    STORE.putClass(state).then(() => { $('saveNote').hidden = true; }, () => { $('saveNote').hidden = false; });
+  }
+
+  function rand(n) {
+    if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+    return Math.floor(Math.random() * n);
+  }
+  function colorFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
+  function initials(name) {
+    const p = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (!p.length) return '?';
+    return (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+  }
+  function sliceColor(i, n) {
+    let k = i % SLICES.length;
+    if (n > 1 && i === n - 1 && k === 0) k = 3; // never two of the same colour side by side
+    return SLICES[k];
+  }
+
+  function rebuild() {
+    pool = state.noRepeat ? state.students.filter(s => !s.picked) : state.students.slice();
+    if (LANG.code !== state.lang) LANG.set(state.lang);
+    const theme = state.spinTheme || state.theme || 'balloons';   // Spin Time's own theme
+    if (paintedTheme !== theme) { paintedTheme = theme; THEMES.paint(theme, $('balloons'), reduce); }
+    renderSettings();
+    $('classTitle').textContent = state.className || t('spinTime');
+    document.title = (state.className ? state.className + ' · ' : '') + t('spinTime');
+    for (const s of pool) {
+      if (s.photo && !images.has(s.id)) {
+        const img = new Image(); img.onload = draw; img.src = s.photo; images.set(s.id, img);
+      }
+    }
+    const empty = !state.students.length, done = !empty && !pool.length;
+    $('wheelWrap').hidden = empty || done;
+    hint.hidden = empty || done;
+    $('msgEmpty').hidden = !empty;
+    $('msgDone').hidden = !done;
+    const left = pool.length;
+    hint.innerHTML = t('tapToSpin') + (state.noRepeat && left ? ` <span class="left-count">${t('friendsLeft', { n: left })}</span>` : '');
+    renderCalled();
+    resize();
+  }
+
+  function renderCalled() {
+    const byId = new Map(state.students.map(s => [s.id, s]));
+    const called = (state.history || []).map(id => byId.get(id)).filter(Boolean);
+    const list = $('calledList');
+    const prevCount = list.children.length;
+    $('called').hidden = !state.students.length;
+    $('calledCount').textContent = called.length;
+    $('called').classList.toggle('compact', called.length > 12);
+    $('calledEmpty').hidden = called.length > 0;
+    list.hidden = !called.length;
+    list.innerHTML = '';
+    called.forEach((s, i) => {
+      const li = document.createElement('li');
+      if (i === called.length - 1) li.className = 'latest' + (called.length > prevCount ? ' fresh' : '');
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = i + 1;
+      const face = document.createElement('span'); face.className = 'face';
+      if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; face.append(img); }
+      else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); face.append(d); }
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+      li.append(num, face, nm);
+      list.append(li);
+    });
+    if (list.lastElementChild) list.lastElementChild.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  // ---------- drawing ----------
+  function resize() {
+    const wrap = $('wheelWrap');
+    if (wrap.hidden) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    size = wrap.clientWidth;
+    canvas.width = Math.round(size * dpr); canvas.height = Math.round(size * dpr);
+    draw();
+  }
+
+  function draw(blink = 0) {
+    if (!size) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+    const cx = size / 2, cy = size / 2, R = size / 2 - 2, r = R * 0.9;
+    const n = pool.length;
+
+    // outer rim with lights
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = '#1D2742'; ctx.fill();
+    const bulbs = Math.max(16, Math.round(size / 26));
+    for (let k = 0; k < bulbs; k++) {
+      const a = k * TAU / bulbs, br = (R + r) / 2;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * br, cy + Math.sin(a) * br, Math.max(2.5, (R - r) * 0.22), 0, TAU);
+      ctx.fillStyle = (k + blink) % 2 ? '#FFE48A' : '#FFFFFF'; ctx.fill();
+    }
+    if (!n) return;
+
+    const seg = TAU / n;
+    // big classes: photos would be too small to recognise, so the wheel shows names only
+    const fitR = r * 0.74 * Math.sin(Math.min(seg, Math.PI) / 2) * 0.9;
+    const showPhotos = n === 1 || fitR >= r * 0.075;
+    const pr = Math.min(r * 0.12, fitR * 0.75); // photo circle: big enough to recognise, small enough to leave room for the name
+    const px = r - pr - r * 0.05;
+
+    // Names: the whole wheel uses one direction. Names run along their slices, from the middle out,
+    // like spokes; only with 4 names or fewer (wide slices) do they go across when that fits better.
+    // Every name starts at the same big size; only names too long for their slice get smaller, and
+    // never below a size children can read (very long ones are squeezed).
+    const font = f => `900 ${f}px Andika, "Century Gothic", system-ui, sans-serif`;
+    const inner = r * 0.33, end = showPhotos ? px - pr - r * 0.04 : r * 0.95; // stay clear of the SPIN button
+    const avail = end - inner, tx = (inner + end) / 2;
+    const room = 2 * tx * Math.sin(Math.min(seg, Math.PI) / 2);
+    const chord = (seg >= Math.PI ? 2 * tx : 2 * tx * Math.sin(seg / 2)) * 0.85;
+    ctx.font = font(100);
+    const perPx = pool.map(p => Math.max(1, ctx.measureText(p.name || '').width) / 100); // width per pixel of font size
+    const alongMax = Math.min(r * 0.085, room * 0.62), acrossMax = Math.min(r * 0.1, avail * 0.6);
+    const alongFit = w => Math.min(alongMax, avail / w);
+    const acrossFit = w => Math.min(acrossMax, chord / w);
+    const sorted = perPx.slice().sort((x, y) => x - y);
+    const middle = sorted[Math.floor((sorted.length - 1) / 2)];
+    const across = n <= 4 && acrossFit(middle) > alongFit(middle);
+    const fit = across ? acrossFit : alongFit;
+    const maxW = across ? chord : avail;
+    const floorFs = Math.min(Math.max(11, size * 0.022), across ? acrossMax : alongMax); // ~14px on a 640px wheel
+
+    for (let i = 0; i < n; i++) {
+      const s = pool[i], start = rot + i * seg;
+      const [fill, txt] = sliceColor(i, n);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, start + seg); ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill();
+      if (i === winnerIdx && flashOn) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill(); }
+      if (n > 1) { ctx.lineWidth = Math.max(2, size / 220); ctx.strokeStyle = '#fff'; ctx.stroke(); }
+
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(start + seg / 2);
+      // photo near the rim
+      if (showPhotos) {
+        ctx.beginPath(); ctx.arc(px, 0, pr + Math.max(2, pr * 0.1), 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.save();
+        ctx.beginPath(); ctx.arc(px, 0, pr, 0, TAU); ctx.clip();
+        // Faces stand upright while the wheel is still. The turn is worked out at rest and kept
+        // during a spin (like the names), so faces turn with the wheel instead of wobbling.
+        if (!spinning) faceMemo[i] = -(start + seg / 2);
+        ctx.translate(px, 0); ctx.rotate(faceMemo[i] ?? -(start + seg / 2));
+        const img = images.get(s.id);
+        if (s.photo && img && img.complete && img.naturalWidth) {
+          ctx.drawImage(img, -pr, -pr, pr * 2, pr * 2);
+        } else {
+          ctx.fillStyle = colorFor(s.name || '?'); ctx.fillRect(-pr, -pr, pr * 2, pr * 2);
+          ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = font(pr * 0.9);
+          ctx.fillText(initials(s.name), 0, pr * 0.06);
+        }
+        ctx.restore();
+      }
+      // name (a class of one gets theirs written level under the SPIN button, after the loop)
+      if (n > 1) {
+        const fs = Math.max(floorFs, fit(perPx[i]));
+        if (avail > 8) {
+          // Turn names that would be upside down. Worked out while the wheel is still and kept
+          // during a spin, so names don't flip over as they pass the pointer.
+          const ang = start + seg / 2;
+          if (!spinning) flipMemo[i] = across ? Math.sin(ang) > 0.001 : Math.cos(ang) < -0.001;
+          const flip = !!flipMemo[i];
+          ctx.fillStyle = txt; ctx.textBaseline = 'middle'; ctx.font = font(fs);
+          if (across) {
+            ctx.save(); ctx.translate(tx, 0); ctx.rotate(flip ? -Math.PI / 2 : Math.PI / 2);
+            ctx.textAlign = 'center'; ctx.fillText(s.name || '', 0, 0, maxW);
+            ctx.restore();
+          } else if (flip) {
+            ctx.save(); ctx.rotate(Math.PI);
+            ctx.textAlign = 'left'; ctx.fillText(s.name || '', -end, fs * 0.04, maxW);
+            ctx.restore();
+          } else {
+            ctx.textAlign = 'right'; ctx.fillText(s.name || '', end, fs * 0.04, maxW);
+          }
+        }
+      }
+      ctx.restore();
+    }
+    if (n === 1) {
+      const nm = pool[0].name || t('friend'), w = r * 1.1;
+      ctx.font = font(100);
+      const fs = Math.max(floorFs, Math.min(r * 0.14, w / (Math.max(1, ctx.measureText(nm).width) / 100)));
+      ctx.font = font(fs); ctx.fillStyle = sliceColor(0, 1)[1]; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(nm, cx, cy + r * 0.48, w);
+    }
+    // inner ring around the hub
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.25, 0, TAU); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fill();
+  }
+
+  // which slice sits under the pointer (top of the wheel)
+  function indexAtPointer(angle) {
+    const n = pool.length, seg = TAU / n;
+    let a = (-Math.PI / 2 - angle) % TAU; if (a < 0) a += TAU;
+    return Math.floor(a / seg) % n;
+  }
+
+  // ---------- sound ----------
+  let actx = null;
+  function audio() {
+    if (!state.sound) return null;
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    if (actx.state === 'suspended') actx.resume();
+    if (!actx.out) {   // everything goes through a limiter, so the louder sounds don't crackle
+      const comp = actx.createDynamicsCompressor(); comp.threshold.value = -6; comp.ratio.value = 12;
+      comp.connect(actx.destination); actx.out = comp;
+    }
+    return actx;
+  }
+  function beep(freq, dur, type = 'square', vol = 0.06, when = 0, slideTo = 0) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + when;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.out); o.start(t); o.stop(t + dur + 0.02);
+  }
+  const whoosh = () => beep(180, 0.5, 'sawtooth', 0.05, 0, 900);
+  // a click for each name; slower, deeper clicks near the end
+  const tick = tense => tense ? beep(700, 0.07, 'square', 0.06) : beep(1200, 0.04, 'square', 0.04);
+  const drum = () => beep(90 + Math.random() * 30, 0.06, 'triangle', 0.08);
+  function fanfare() {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => beep(f, i === 3 ? 0.7 : 0.16, 'triangle', 0.25, i * 0.12));
+    beep(1318.5, 0.6, 'sine', 0.1, 0.36);
+    cheer(0.4);
+  }
+  // a crowd "yay!": soft noise that swells and fades
+  function cheer(when = 0) {
+    const a = audio(); if (!a) return;
+    const t0 = a.currentTime + when, len = Math.floor(a.sampleRate * 1.6);
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (0.6 + 0.4 * Math.sin(i / a.sampleRate * 38));
+    const src = a.createBufferSource(); src.buffer = buf;
+    const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
+    src.connect(bp).connect(g).connect(a.out); src.start(t0);
+  }
+
+  // ---------- spin ----------
+  // Three parts, for suspense:
+  //  1. wind-up: the wheel pulls back a little before it goes
+  //  2. fast spin that slows steadily
+  //  3. the last few names crawl past the pointer with a drumroll; half the time
+  //     the wheel only just tips into the winner's slice at the very end
+  function spin() {
+    if (spinning || !pool.length || !$('reveal').hidden) return;
+    spinning = true; hub.disabled = true; hub.classList.remove('pulse');
+    winnerIdx = -1; flashOn = false;
+    hint.hidden = true;
+    // no settings changes until the winner pop-up is closed: they could change the wheel mid-spin
+    openSettings(false); setBtn.disabled = true;
+    const wheel = pool.slice();   // the names on the wheel for this spin; the winner comes from here
+    const quick = !!state.quickSpin && !reduce;   // Quick spin: about 3 seconds
+
+    const n = wheel.length, seg = TAU / n;
+    const win = rand(n);
+    // where the pointer stops inside the winner's slice (1 = the edge it enters from)
+    const frac = Math.random() < 0.5 ? 0.8 + Math.random() * 0.12 : 0.3 + Math.random() * 0.4;
+    const target = -Math.PI / 2 - (win + frac) * seg;
+
+    const back = reduce ? 0 : 0.22;                    // wind-up, in radians
+    const tWind = reduce ? 0 : 380;
+    const start = rot, from = rot - back;
+    let delta = (target - from) % TAU; if (delta < 0) delta += TAU;
+    const D = (reduce ? 1 : quick ? 3 : 4 + rand(2)) * TAU + delta;  // total distance after the wind-up
+    const creep = Math.min(D * 0.35, seg * (quick ? 1.2 : 2.2 + Math.random() * 1.3));
+    const TA = reduce ? 900 : quick ? 1700 + rand(300) : 3600 + rand(600);   // fast part
+    const TB = reduce ? 700 : quick ? 900 + rand(300) : 2700 + rand(900);    // slow, suspenseful part
+    const vB = 3 * creep / TB;                          // speed where the two parts meet
+    const DA = D - creep;
+    const v0 = Math.max(vB, 2 * DA / TA - vB);
+    const posA = t => v0 * t - (v0 - vB) * t * t / (2 * TA);
+    const posB = u => creep * (1 - Math.pow(1 - u, 3));
+
+    const t0 = performance.now();
+    showNow(wheel[indexAtPointer(rot)]); $('now').hidden = false;
+    let lastIdx = indexAtPointer(rot), blink = 0, lastBlink = t0, lastDrum = 0, whooshed = false, tense = false;
+
+    (function frame(now) {
+      const t = now - t0;
+      if (t < tWind) {
+        const u = t / tWind;
+        rot = start - back * (1 - Math.cos(u * Math.PI)) / 2;
+      } else {
+        if (!whooshed) { whooshed = true; whoosh(); }
+        const ts = t - tWind;
+        if (ts < TA) rot = from + posA(ts);
+        else {
+          if (!tense) { tense = true; $('wheelWrap').classList.add('suspense'); $('now').classList.add('suspense'); }
+          const u = Math.min(1, (ts - TA) / TB);
+          rot = from + DA + posB(u);
+          if (now - lastDrum > 75) { lastDrum = now; drum(); }
+        }
+      }
+      const idx = indexAtPointer(rot);
+      if (idx !== lastIdx && n > 1) {
+        lastIdx = idx; tick(tense); showNow(wheel[idx]);
+        pointer.classList.remove('flick'); void pointer.getBoundingClientRect(); pointer.classList.add('flick');
+      }
+      if (now - lastBlink > (tense ? 260 : 140)) { blink ^= 1; lastBlink = now; }
+      draw(blink);
+      if (t < tWind + TA + TB) requestAnimationFrame(frame);
+      else {
+        rot = from + D;
+        $('wheelWrap').classList.remove('suspense'); $('now').classList.remove('suspense');
+        finish(win, wheel);
+      }
+    })(t0);
+  }
+
+  async function finish(win, wheel) {
+    rot = rot % TAU;
+    winnerIdx = win;
+    const s = wheel[win];
+    for (let k = 0; k < 6; k++) { flashOn = !flashOn; draw(k % 2); await new Promise(r => setTimeout(r, 130)); }
+    flashOn = true; draw();
+    if (state.noRepeat) {
+      const real = state.students.find(x => x.id === s.id);
+      if (real) real.picked = true;
+    }
+    state.history = (state.history || []).concat(s.id);
+    save();
+    reveal(s);
+  }
+
+  // the bubble under the wheel: whoever the pointer is on right now
+  function showNow(s) {
+    const face = $('nowFace'); face.innerHTML = '';
+    if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; face.append(img); }
+    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); face.append(d); }
+    const nm = $('nowName');
+    nm.textContent = s.name || t('friend');
+    nm.classList.remove('bump'); void nm.offsetWidth; nm.classList.add('bump');   // a little pop for each new name
+  }
+
+  function reveal(s) {
+    const box = $('revealPic'); box.innerHTML = '';
+    if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = s.name; box.append(img); }
+    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); box.append(d); }
+    $('revealName').textContent = s.name || t('friend');
+    $('reveal').hidden = false;
+    $('okBtn').focus();
+    fanfare(); confetti();
+  }
+
+  function closeReveal() {
+    if ($('reveal').hidden) return;
+    $('reveal').hidden = true;
+    spinning = false; hub.disabled = false; hub.classList.add('pulse'); setBtn.disabled = false;
+    winnerIdx = -1; flashOn = false;
+    $('now').hidden = true;
+    rebuild();
+    hub.focus();
+  }
+
+  // ---------- confetti ----------
+  let confettiRaf = null;
+  function confetti() {
+    if (reduce) return;
+    const c = $('confetti'), cx = c.getContext('2d');
+    const d = window.devicePixelRatio || 1;
+    c.hidden = false; c.width = innerWidth * d; c.height = innerHeight * d;
+    cx.setTransform(d, 0, 0, d, 0, 0);
+    const cols = ['#FFC83D', '#E8467C', '#23A86A', '#2F7BEA', '#7558F0', '#F08A24'];
+    const parts = Array.from({ length: 220 }, () => ({
+      x: innerWidth / 2 + (Math.random() - .5) * 160, y: innerHeight * 0.4,
+      vx: (Math.random() - .5) * 18, vy: -Math.random() * 16 - 5,
+      w: 7 + Math.random() * 8, h: 9 + Math.random() * 10,
+      r: Math.random() * Math.PI, vr: (Math.random() - .5) * .35, col: cols[(Math.random() * cols.length) | 0]
+    }));
+    const start = performance.now();
+    cancelAnimationFrame(confettiRaf);
+    (function frame(now) {
+      const t = now - start;
+      cx.clearRect(0, 0, innerWidth, innerHeight);
+      cx.globalAlpha = Math.max(0, 1 - Math.max(0, t - 2400) / 1000);
+      for (const p of parts) {
+        p.vy += 0.38; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r);
+        cx.fillStyle = p.col; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2)));
+        cx.restore();
+      }
+      if (t < 3400) confettiRaf = requestAnimationFrame(frame);
+      else { cx.clearRect(0, 0, innerWidth, innerHeight); c.hidden = true; }
+    })(start);
+  }
+
+
+  // ---------- teacher exit: press and hold ----------
+  const tBtn = $('teacherBtn'), tFill = $('teacherFill');
+  const HOLD = 1200;
+  let holdStart = 0, holdRaf = null;
+  function holdBegin(e) {
+    if (e) e.preventDefault();
+    if (holdStart) return;
+    holdStart = performance.now();
+    $('teacherLbl').textContent = $('teacherShort').textContent = t('keepHolding');
+    (function step(now) {
+      const p = Math.min(1, (now - holdStart) / HOLD);
+      tFill.style.transform = `scaleX(${p})`;
+      if (p >= 1) { location.href = 'index.html'; return; }
+      holdRaf = requestAnimationFrame(step);
+    })(holdStart);
+  }
+  function holdEnd() {
+    holdStart = 0; cancelAnimationFrame(holdRaf);
+    tFill.style.transform = 'scaleX(0)';
+    $('teacherLbl').textContent = t('holdTeacher'); $('teacherShort').textContent = t('teacherShort');
+  }
+  tBtn.addEventListener('pointerdown', holdBegin);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => tBtn.addEventListener(ev, holdEnd));
+  tBtn.addEventListener('contextmenu', e => e.preventDefault());
+  tBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); holdBegin(e); } });
+  tBtn.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') holdEnd(); });
+  tBtn.addEventListener('click', e => e.preventDefault());
+
+  // ---------- Spin Time settings ----------
+  const setBtn = $('setBtn'), setPanel = $('setPanel');
+  function renderSettings() {
+    const sel = $('spTheme');
+    if (!sel.options.length) for (const th of THEMES.list) { const o = document.createElement('option'); o.value = th.key; sel.append(o); }
+    for (const o of sel.options) o.textContent = t('theme_' + o.value);
+    sel.value = state.spinTheme || state.theme || 'balloons';
+    $('spNoRepeat').checked = state.noRepeat;
+    $('spQuick').checked = !!state.quickSpin;
+  }
+  function openSettings(open) {
+    if (open && spinning) return;
+    setPanel.hidden = !open;
+    setBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  setBtn.onclick = e => { e.stopPropagation(); openSettings(setPanel.hidden); };
+  document.addEventListener('pointerdown', e => { if (!setPanel.hidden && !(e.target.closest && e.target.closest('#setPanel, #setBtn'))) openSettings(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') openSettings(false); });
+  // changes are ignored while the wheel spins (the panel is closed then anyway)
+  $('spTheme').onchange = () => { if (spinning) return renderSettings(); state.spinTheme = $('spTheme').value; save(); rebuild(); };
+  $('spNoRepeat').onchange = () => { if (spinning) return renderSettings(); state.noRepeat = $('spNoRepeat').checked; save(); rebuild(); };
+  $('spQuick').onchange = () => { state.quickSpin = $('spQuick').checked; save(); };
+  // Start a new round asks first, so a stray tap doesn't wipe the round
+  function askNewRound() {
+    return new Promise(resolve => {
+      const box = $('confirm');
+      box.hidden = false; $('cfCancel').focus();
+      const done = v => { box.hidden = true; document.removeEventListener('keydown', onKey, true); resolve(v); };
+      const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); } };
+      document.addEventListener('keydown', onKey, true);
+      $('cfOk').onclick = () => done(true);
+      $('cfCancel').onclick = () => done(false);
+      box.onclick = e => { if (e.target === box) done(false); };
+    });
+  }
+  $('spNewRound').onclick = async () => {
+    if (spinning) return;
+    openSettings(false);
+    if (!(await askNewRound()) || spinning) return;
+    state.students.forEach(s => s.picked = false); state.history = [];
+    save(); rebuild();
+  };
+
+  // ---------- events ----------
+  hub.onclick = spin;
+  canvas.addEventListener('click', spin);
+  $('okBtn').onclick = closeReveal;
+  $('reveal').addEventListener('click', e => { if (e.target.id === 'reveal') closeReveal(); });
+  $('againAll').onclick = () => { state.students.forEach(s => s.picked = false); state.history = []; save(); rebuild(); };
+  document.addEventListener('keydown', e => {
+    if (!$('confirm').hidden) return;
+    if (e.target === tBtn || (e.target.closest && e.target.closest('#setPanel, #setBtn'))) return;
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (!$('reveal').hidden) closeReveal(); else spin();
+    } else if (e.key === 'Escape') closeReveal();
+  });
+  // Full screen: label follows the state; hidden where the device doesn't allow it (iPhone)
+  const fsBtn = $('fsBtn');
+  const ENTER = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  const EXIT = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+  if (!document.fullscreenEnabled) fsBtn.hidden = true;
+  document.addEventListener('fullscreenchange', () => {
+    const on = !!document.fullscreenElement;
+    $('fsLbl').textContent = on ? t('exitFullScreen') : t('fullScreen');
+    $('fsIcon').innerHTML = on ? EXIT : ENTER;
+    fsBtn.title = on ? t('exitFullTip') : t('fullTip');
+  });
+  let fsNoteTimer;
+  function fsRefused() {
+    if (document.fullscreenElement) return;
+    $('fsLbl').textContent = t('notAvailable');
+    clearTimeout(fsNoteTimer);
+    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = t('fullScreen'); }, 2500);
+  }
+  $('fsBtn').onclick = () => {
+    try {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      document.documentElement.requestFullscreen().catch(fsRefused);
+      setTimeout(fsRefused, 800); // some browsers refuse without saying so
+    } catch (e) { fsRefused(); }
+  };
+  if ('ResizeObserver' in window) new ResizeObserver(() => resize()).observe($('wheelWrap'));
+  else window.addEventListener('resize', resize);
+  window.addEventListener('pageshow', async e => { if (e.persisted) { await load(); rebuild(); } });
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+  load().then(rebuild);
+  // the wheel is drawn on a canvas, so redraw once the school-style font has loaded
+  if (document.fonts && document.fonts.load) document.fonts.load('900 40px Andika').then(() => draw(), () => {});
+})();
+</script>
+</body>
+</html>

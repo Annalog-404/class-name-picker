@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Security: the browser may only load this app's own files and may not contact any other website -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Group Time</title>
+<meta name="theme-color" content="#7FCBFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+/* Andika: school-style "a" and "g" for early readers. Bundled so it works offline. */
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 400; font-display: swap; src: url(fonts/andika-400-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Andika"; font-weight: 700 900; font-display: swap; src: url(fonts/andika-700-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Children's Group Time screen: everyone runs around, a countdown, then BOOM, they land in their groups. */
+:root {
+  --sky-top: #7FCBFF;
+  --sky-bottom: #C9B8FF;
+  --ink: #1D2742;
+  --white: #FFFFFF;
+  --sun: #FFC83D;
+  --sun-deep: #E9A800;
+  --font-display: "Andika", "Century Gothic", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; color: var(--ink);
+  font-family: var(--font-display);
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 4px solid var(--white); outline-offset: 3px; }
+
+/* background shapes from the teacher's theme (themes.js) */
+.balloons { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.balloons .balloon {
+  position: absolute; bottom: -120px; width: 70px; height: 84px; border-radius: 50% 50% 48% 48%;
+  opacity: .35; animation: rise linear infinite;
+}
+.balloons .balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 50px; background: rgba(255,255,255,.7); }
+@keyframes rise { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(calc(-100vh - 260px)) rotate(4deg); } }
+.balloons .floaty {
+  position: absolute; bottom: -110px; opacity: .45; display: grid; place-items: center;
+  font-weight: 900; line-height: 1; animation: drift linear infinite;
+}
+.balloons .floaty svg { width: 100%; height: 100%; display: block; }
+@keyframes drift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(calc(-100vh - 240px)) rotate(var(--turn, 20deg)); } }
+
+.screen {
+  position: relative; z-index: 1; height: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+.top { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+.title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.title img { width: 42px; height: 42px; border-radius: 12px; box-shadow: 0 3px 0 var(--sun-deep); }
+.title h1 {
+  margin: 0; font-size: clamp(20px, 3.2vw, 32px); font-weight: 900; color: var(--on-sky, #fff);
+  text-shadow: 0 3px 0 var(--on-sky-shadow, rgba(29,39,66,.25)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.corner {
+  border: none; border-radius: 14px; background: rgba(255,255,255,.35); color: var(--ink);
+  font-weight: 800; font-size: 14px; padding: 9px 12px; display: inline-flex; align-items: center; gap: 6px;
+  position: relative; overflow: hidden;
+}
+.corner svg { width: 18px; height: 18px; }
+@media (max-width: 520px) { #fsLbl, #setLbl { display: none; } }
+/* phones: icons only, a short Teacher label, so the class name still has room */
+.corner .short { display: none; }
+@media (max-width: 480px) {
+  .top { gap: 6px; }
+  .title img { display: none; }
+  .title h1 { font-size: 20px; }
+  .corner { padding: 9px 10px; }
+  .corner .long { display: none; }
+  .corner .short { display: inline; }
+}
+.corner .fill { position: absolute; inset: 0; background: rgba(255,255,255,.75); transform-origin: left; transform: scaleX(0); }
+.corner span.lbl, .corner svg { position: relative; }
+
+/* the play area: group cards, and the running faces on top */
+.arena { position: relative; flex: 1; min-height: 0; }
+.groups {
+  position: absolute; inset: 0; overflow: auto; padding: 4px;
+  --fs: 22px; --cols: 3; --mcols: 1;
+  display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 16px;
+  align-content: safe center;   /* centred, but never cut off at the top if it is too tall */
+}
+.gcard {   /* spacing grows and shrinks with the name size, so small screens aren't all padding */
+  background: var(--white); border-radius: calc(var(--fs) * .9); padding: calc(var(--fs) * .5) calc(var(--fs) * .6) calc(var(--fs) * .6);
+  border-top: calc(var(--fs) * .45) solid var(--c);
+  box-shadow: 0 6px 0 rgba(29,39,66,.12); display: flex; flex-direction: column; gap: calc(var(--fs) * .4); min-width: 0;
+  animation: cardin .45s cubic-bezier(.2,1.4,.4,1) both; animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes cardin { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: none; } }
+/* --ci: a darker shade of the group colour where the colour itself is too pale for writing */
+.gcard h2 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: calc(var(--fs) * 1.15); line-height: 1.15; font-weight: 900; color: var(--ci, var(--c)); min-width: 0; }
+.gcard h2 .gt { min-width: 0; }
+.gcard h2 .ct { margin-left: auto; font-size: calc(var(--fs) * .7); background: var(--ci, var(--c)); color: #fff; border-radius: 999px; padding: 2px 12px; font-variant-numeric: tabular-nums; flex: none; }
+.gcard h2 .gicon { width: calc(var(--fs) * 1.9); height: calc(var(--fs) * 1.9); font-size: calc(var(--fs) * 1.45); }
+.members { display: grid; grid-template-columns: repeat(var(--mcols), minmax(0, 1fr)); gap: calc(var(--fs) * .3); }  /* neat columns */
+.chip {
+  display: flex; align-items: center; gap: calc(var(--fs) * .35); background: #F2F6FC; border-radius: calc(var(--fs) * 1.2);
+  padding: calc(var(--fs) * .2) calc(var(--fs) * .6) calc(var(--fs) * .2) calc(var(--fs) * .2); min-width: 0; max-width: 100%;
+}
+.chip.waiting { visibility: hidden; }
+.chip .face { width: calc(var(--fs) * 1.7); height: calc(var(--fs) * 1.7); }
+/* a child's name is never cut short: it wraps instead */
+.chip .nm { font-weight: 800; font-size: var(--fs); line-height: 1.1; min-width: 0; overflow-wrap: anywhere; }
+
+/* the picture next to a group's name, for children who can't read yet */
+.gicon {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #fff; line-height: 1;
+  box-shadow: inset 0 0 0 3px var(--c); font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", var(--font-display);
+}
+.gicon svg { width: 72%; height: 72%; flex: none; display: block; }
+.gicon.badge { background: var(--ci, var(--c)); color: #fff; box-shadow: none; font-family: var(--font-display); font-weight: 900; }
+
+.face {
+  display: block; border-radius: 50%; overflow: hidden; border: 3px solid var(--white); background: #F1F6FC; flex: none;
+  box-shadow: 0 2px 6px rgba(29,39,66,.18);
+}
+.face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.face .initials { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: .9em; }
+.chip .face .initials { font-size: calc(var(--fs) * .7); }
+
+/* Trains: one track per group, an engine at the front and a carriage per child */
+.groups.as-trains { display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px 0; }
+/* the parked trains; shrunk as a whole (never cut) if a very big class can't fit otherwise */
+.trains-inner { display: grid; grid-template-columns: repeat(var(--tcols, 1), max-content); gap: 10px 28px; justify-content: center; transform-origin: center; flex: none; }
+.track { position: relative; padding: 0 10px 12px; min-width: max-content; display: flex; align-items: flex-end; }
+.track::after {   /* rails and sleepers */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 9px; z-index: -1;
+  background:
+    linear-gradient(#5B6785, #5B6785) 0 1px / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, rgba(139,90,43,.75) 0 7px, transparent 7px 24px);
+  opacity: .7;
+}
+.train { display: flex; align-items: flex-end; gap: 14px; animation: arrive 1s cubic-bezier(.2,.8,.3,1) both; animation-delay: calc(var(--i) * 90ms); }
+@keyframes arrive { from { transform: translateX(110vw); } to { transform: none; } }
+.train.go { animation: chug .8s ease-in-out; }
+@keyframes chug { 0%, 100% { transform: none; } 35% { transform: translateX(-16px); } 70% { transform: translateX(5px); } }
+.engine { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--c); flex: none; }
+.engine > svg { width: var(--eng, 110px); height: auto; display: block; }
+.engine .ename, .mover .ename {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--ci, var(--c)); color: #fff; font-weight: 900; font-size: var(--ename, 20px); border-radius: 999px;
+  padding: 2px 14px 2px 3px; white-space: nowrap; box-shadow: 0 3px 0 rgba(29,39,66,.18);
+}
+.ename .gicon { width: 1.7em; height: 1.7em; font-size: 1em; }
+.ename .gicon:not(.badge) { font-size: 1.15em; width: 1.5em; height: 1.5em; }
+.car {
+  position: relative; width: var(--car, 96px);   /* each car is as wide as its child's name needs */ flex: none; background: var(--white); border: 4px solid var(--c);
+  border-radius: 14px; padding: 6px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  margin-bottom: 8px; box-shadow: 0 4px 0 rgba(29,39,66,.12);
+}
+.car::before, .car::after { content: ""; position: absolute; bottom: -12px; width: 14px; height: 14px; border-radius: 50%; background: #1D2742; border: 3px solid #fff; }
+.car::before { left: 12%; } .car::after { right: 12%; }
+.car .link { position: absolute; left: -18px; bottom: 16px; width: 18px; height: 5px; border-radius: 3px; background: #5B6785; }
+.car .face { width: var(--face, 56px); height: var(--face, 56px); }
+.car .face .initials { font-size: calc(var(--face, 56px) * .4); }
+.car .nm { font-weight: 800; font-size: var(--nmfs, 16px); line-height: 1.1; max-width: 100%; padding: 0 2px; text-align: center; overflow-wrap: anywhere; }
+.car.waiting .face, .car.waiting .nm { visibility: hidden; }
+
+/* the railway loop */
+.railway { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: visible; }
+.railway path { fill: none; stroke-linejoin: round; }
+.railway .bed { stroke: rgba(255,255,255,.45); stroke-width: 34; }
+.railway .sleepers { stroke: #8B5A2B; stroke-width: 24; stroke-dasharray: 7 14; opacity: .8; }
+.railway .rail { stroke: #4B5675; stroke-width: 3.5; }
+.flier.fly.hopon { transition: transform .6s cubic-bezier(.3,1.4,.5,1); }
+.arena.fadeout > .railway, .arena.fadeout > .mover, .arena.fadeout > .flier { opacity: 0; transition: opacity .4s ease; }
+
+/* engines driving around the playground */
+.mover {
+  position: absolute; left: 0; top: 0; width: 132px; z-index: 7; pointer-events: none; will-change: transform;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--c);
+}
+.mover .ename { --ename: 20px; }
+.mover .eng-img { display: block; width: 132px; }
+.mover .eng-img svg { width: 100%; height: auto; display: block; }
+.flier.waitpick .face { animation: nervous .5s ease-in-out infinite alternate; }
+@keyframes nervous { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+.flier.aboard .face { border-color: var(--c); box-shadow: 0 0 0 3px var(--c), 0 2px 6px rgba(29,39,66,.18); animation: hopin .35s ease-out; }
+@keyframes hopin { 40% { transform: scale(1.18); } }
+.flier.hopeful .face { animation: hopeful .6s ease-out; }
+@keyframes hopeful { 30% { transform: translateY(-14px) scale(1.1); } 60% { transform: translateY(0); } 80% { transform: translateY(-4px); } }
+.flier.aboard .nm { background: var(--c); color: #fff; }
+.flier.aboard { z-index: 6; }   /* children on a train pass over the ones still waiting */
+
+/* a running face */
+.flier {
+  position: absolute; left: 0; top: 0; width: 80px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transform-origin: 0 0; will-change: transform; z-index: 5; pointer-events: none;
+}
+.flier .face { width: 64px; height: 64px; border-width: 4px; }
+.flier .face .initials { font-size: 26px; }
+.flier .nm {
+  background: var(--white); border-radius: 999px; padding: 1px 9px; font-weight: 800; font-size: 16px;
+  white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(29,39,66,.15);
+  transition: opacity .3s ease;
+}
+.flier.fly { transition: transform .85s cubic-bezier(.3,1.35,.5,1); }
+.flier.fly .nm { opacity: 0; }
+
+/* countdown and BOOM */
+.center-msg {
+  position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 8;
+  font-size: clamp(70px, 16vw, 190px); font-weight: 900; color: var(--white); text-align: center; line-height: 1;
+  text-shadow: 0 6px 0 rgba(29,39,66,.35), 0 0 30px rgba(29,39,66,.25);
+}
+.center-msg.small { font-size: clamp(32px, 6vw, 64px); }
+/* short helper words ("Everybody move!") in a solid pill, readable on pale themes too */
+.center-msg.small span { background: rgba(255,255,255,.9); color: #1D2742; text-shadow: none; border-radius: 999px; padding: 8px 30px; box-shadow: 0 6px 0 rgba(29,39,66,.15); }
+.center-msg.pop span { display: inline-block; animation: msgpop .55s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes msgpop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.flash { position: fixed; inset: 0; background: #FFE3A3; z-index: 55; pointer-events: none; animation: flash .55s ease-out forwards; }
+@keyframes flash { from { opacity: .5; } to { opacity: 0; } }   /* soft and warm: no harsh white blink */
+.shake { animation: shake .45s ease-in-out; }
+@keyframes shake { 0%,100% { transform: none; } 20% { transform: translate(-10px, 4px); } 40% { transform: translate(9px, -5px); } 60% { transform: translate(-7px, 3px); } 80% { transform: translate(5px, -2px); } }
+
+.bottom { display: flex; align-items: center; justify-content: center; gap: 12px 18px; flex-wrap: wrap; min-height: 64px; }
+.set-panel {
+  position: fixed; z-index: 40; top: calc(max(12px, env(safe-area-inset-top, 0px)) + 60px); right: max(16px, env(safe-area-inset-right, 0px));
+  width: min(360px, calc(100vw - 32px)); background: var(--white); border-radius: 18px; padding: 14px;
+  box-shadow: 0 12px 30px rgba(29,39,66,.25); display: flex; flex-direction: column; gap: 12px; font-size: 16px;
+}
+.sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 800; }
+.sp-ctrl { display: flex; align-items: center; gap: 6px; }
+.sp-ctrl select { border: 2px solid #D5E1F0; background: #fff; border-radius: 10px; font: inherit; font-weight: 800; padding: 6px 8px; cursor: pointer; max-width: 12em; }
+.sp-btn { align-self: flex-end; border: 2px solid #D5E1F0; background: #fff; border-radius: 10px; font-weight: 800; font-size: 14px; padding: 6px 12px; margin-top: -6px; }
+.sp-btn:hover { background: #F1F6FC; }
+.sp-save {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;
+  border: none; background: #2F7BEA; color: #fff; border-radius: 12px; padding: 10px 12px; font-weight: 800; font-size: 15px;
+}
+.sp-save svg { width: 18px; height: 18px; }
+.sp-save:disabled { opacity: .45; cursor: default; }
+.confirm-back { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(29,39,66,.55); }
+.confirm-card {
+  background: #fff; border-radius: 22px; padding: 22px; width: min(440px, 100%); text-align: center;
+  display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 50px rgba(29,39,66,.3);
+}
+.confirm-card h3 { margin: 0; font-size: 22px; font-weight: 900; }
+.confirm-card p { margin: 0; color: #4A5577; line-height: 1.5; overflow-wrap: anywhere; }
+.cf-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.cf-actions button { min-width: 120px; padding: 9px 14px; font-size: 16px; margin: 0; align-self: auto; }
+.cf-ok { border: none; background: #2F7BEA; color: #fff; border-radius: 10px; font-weight: 800; }
+.stepper { display: inline-flex; align-items: center; border: 2px solid #D5E1F0; border-radius: 10px; background: #fff; overflow: hidden; }
+.stepper button { width: 34px; height: 34px; border: none; background: transparent; font-size: 20px; font-weight: 900; }
+.stepper button:hover { background: #F1F6FC; }
+.stepper button:disabled { opacity: .3; cursor: default; }
+.stepper output { min-width: 2em; text-align: center; font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+/* helper words sit in a solid pill so they read on every theme */
+.hint {
+  font-size: clamp(24px, 2.6vw, 32px); font-weight: 800; color: #1D2742; text-align: center; line-height: 1.25;
+  background: rgba(255,255,255,.9); border-radius: 999px; padding: 6px 22px; box-shadow: 0 4px 0 rgba(29,39,66,.12); max-width: 100%;
+}
+@media (max-width: 480px) { .bottom .hint { font-size: 20px; } .bottom .big-btn { padding: 12px 26px; } }
+/* shown only if this device could not save (for the teacher) */
+.save-note {
+  position: fixed; left: 50%; transform: translateX(-50%); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 58px);
+  z-index: 45; width: max-content; max-width: min(460px, calc(100vw - 24px)); pointer-events: none;   /* under the top bar, never over a button */
+  background: #FFF4DE; color: #1D2742; border: 2px solid #F5C46B; border-radius: 12px; padding: 6px 12px; font-size: 14px; font-weight: 700;
+}
+.big-btn {
+  border: none; border-radius: 999px; background: var(--sun); color: var(--ink); font-weight: 900;
+  font-size: clamp(22px, 3.4vw, 30px); padding: 14px 36px; box-shadow: 0 6px 0 var(--sun-deep);
+}
+.big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--sun-deep); }
+.big-btn:disabled { opacity: .55; cursor: default; }
+
+.message {
+  position: absolute; inset: 0; margin: auto; height: fit-content;
+  background: var(--white); border-radius: 32px; padding: 32px 28px; text-align: center; max-width: 560px;
+  box-shadow: 0 10px 0 rgba(29,39,66,.15); display: flex; flex-direction: column; gap: 14px; align-items: center;
+}
+.message h2 { margin: 0; font-size: clamp(28px, 5vw, 44px); font-weight: 900; text-wrap: balance; }
+.message p { margin: 0; font-size: 17px; line-height: 1.5; color: #4A5577; }
+
+#confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; width: 100%; height: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .balloons span, .gcard, .center-msg.pop span, .flash, .shake, .train, .train.go, .flier.waitpick .face, .flier.aboard .face, .flier.hopeful .face { animation: none; }
+  .flier.fly { transition: none; }
+}
+.groups.settled .gcard, .groups.settled .train { animation: none; }
+</style>
+</head>
+<body>
+<div class="balloons" id="balloons" aria-hidden="true"></div>
+
+<div class="screen" id="screen">
+  <div class="top">
+    <div class="title">
+      <img src="icons/icon-192.png" alt="">
+      <h1 id="classTitle">Group Time</h1>
+    </div>
+    <button class="corner" id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+      <span class="lbl" id="setLbl" data-t="settings">Settings</span>
+    </button>
+    <button class="corner" id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen (press Esc to leave)">
+      <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      <span class="lbl" id="fsLbl" data-t="fullScreen">Full screen</span>
+    </button>
+    <button class="corner" id="teacherBtn" type="button" data-t-title="teacherTip" title="Press and hold to go back to Teacher setup">
+      <span class="fill" id="teacherFill"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <span class="lbl long" id="teacherLbl" data-t="holdTeacher">Hold for Teacher</span>
+      <span class="lbl short" id="teacherShort" data-t="teacherShort">Teacher</span>
+    </button>
+  </div>
+
+  <div class="arena" id="arena">
+    <div class="groups" id="groups" aria-live="polite"></div>
+    <div class="center-msg" id="centerMsg" hidden aria-hidden="true"></div>
+    <div class="message" id="msgEmpty" hidden>
+      <h2 data-t="noNamesTitle">No names yet</h2>
+      <p id="msgEmptyText" data-t="needTwo">Add at least 2 students to make groups.</p>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="hint" id="hint" data-t="groupsWaiting">Press the button to find your teammates!</div>
+    <button class="big-btn" id="makeBtn" type="button" data-t="makeGroups">Make groups!</button>
+  </div>
+</div>
+
+<!-- Group Time's own settings; the teacher can change their mind right here -->
+<div class="set-panel" id="setPanel" hidden>
+  <div class="sp-row">
+    <span data-t="groupsLabel">Groups</span>
+    <div class="sp-ctrl">
+      <div class="stepper">
+        <button type="button" id="gMinus" aria-label="Fewer">−</button>
+        <output id="gNum" aria-live="polite">4</output>
+        <button type="button" id="gPlus" aria-label="More">+</button>
+      </div>
+      <select id="groupMode" aria-label="Group by">
+        <option value="count" data-t="groupsWord">groups</option>
+        <option value="size" data-t="perGroupWord">per group</option>
+      </select>
+    </div>
+  </div>
+  <label class="sp-row" for="nameStyle">
+    <span data-t="namesLabel">Names</span>
+    <div class="sp-ctrl"><select id="nameStyle"></select></div>
+  </label>
+  <button type="button" class="sp-btn" id="newNamesBtn" data-t="otherNames">New names</button>
+  <label class="sp-row" for="animStyle">
+    <span data-t="showLabel">Show</span>
+    <div class="sp-ctrl">
+      <select id="animStyle">
+        <option value="boom" data-t="anim_boom">Boom</option>
+        <option value="trains" data-t="anim_trains">Trains</option>
+      </select>
+    </div>
+  </label>
+  <label class="sp-row" for="groupTheme">
+    <span data-t="themeLabel">Theme</span>
+    <div class="sp-ctrl"><select id="groupTheme"></select></div>
+  </label>
+  <button type="button" class="sp-save" id="saveGroupsBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+    <span data-t="saveGroups">Save these groups</span>
+  </button>
+</div>
+
+<!-- confirmation before saving a file -->
+<div class="confirm-back" id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
+  <div class="confirm-card">
+    <h3 id="cfTitle"></h3>
+    <p id="cfText"></p>
+    <div class="cf-actions">
+      <button type="button" class="sp-btn" id="cfCancel" data-t="cancel">Cancel</button>
+      <button type="button" class="cf-ok" id="cfOk"></button>
+    </div>
+  </div>
+</div>
+
+<div class="save-note" id="saveNote" hidden role="status" data-t="saveFailed">Couldn't save on this device. Teacher: save a backup soon.</div>
+
+<canvas id="confetti" hidden></canvas>
+
+<script src="lang.js"></script>
+<script src="themes.js"></script>
+<script src="store.js"></script>
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const COLORS = ['#2F7BEA', '#E8467C', '#23A86A', '#7558F0', '#F08A24', '#0EA5B7', '#D9478F', '#5E7CE2'];
+  const GROUP_COLORS = ['#E8467C', '#2F7BEA', '#23A86A', '#F08A24', '#7558F0', '#0EA5B7', '#D9478F', '#C98F00', '#5E7CE2', '#2D9C5A', '#B8572B', '#4F46E5'];
+  // the same colours, darker where white writing on them (or them on white) would be hard to read
+  const GROUP_INK = ['#D63A6E', '#2F7BEA', '#1B8454', '#B65C0A', '#7558F0', '#0B7D8A', '#C23C7F', '#8A6400', '#4A67CF', '#237A47', '#B8572B', '#4F46E5'];
+  const groupColors = (el, gi) => { el.style.setProperty('--c', GROUP_COLORS[gi % 12]); el.style.setProperty('--ci', GROUP_INK[gi % 12]); };
+  const $ = id => document.getElementById(id);
+  const t = LANG.t;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const arena = $('arena'), groupsBox = $('groups'), msg = $('centerMsg'), makeBtn = $('makeBtn'), hint = $('hint');
+
+  let state = STORE.blankClass();
+  let busy = false;
+  let fliers = [];
+
+  // ---------- data (the class the teacher picked, from store.js) ----------
+  async function load() {
+    try { state = (await STORE.currentClass()).cls; } catch (e) {}
+  }
+  // if the device is full, a small note tells the teacher (the show keeps working)
+  function save() {
+    STORE.putClass(state).then(() => { $('saveNote').hidden = true; }, () => { $('saveNote').hidden = false; });
+  }
+
+  function rand(n) {
+    if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+    return Math.floor(Math.random() * n);
+  }
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function colorFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
+  function initials(name) {
+    const p = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (!p.length) return '?';
+    return (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+  }
+  function faceEl(s) {
+    const f = document.createElement('span'); f.className = 'face';
+    if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; img.draggable = false; f.append(img); }
+    else { const d = document.createElement('span'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); f.append(d); }
+    return f;
+  }
+
+  // Group name suggestions, by language (falls back to English). Each shuffle picks names at random.
+  const NAME_SETS = {
+    animals: {
+      en: ['Lions', 'Tigers', 'Eagles', 'Dolphins', 'Pandas', 'Owls', 'Turtles', 'Bees', 'Butterflies', 'Elephants', 'Penguins', 'Monkeys'],
+      fil: ['Tarsier', 'Agila', 'Kalabaw', 'Pawikan', 'Tamaraw', 'Butanding', 'Paruparo', 'Bubuyog', 'Kuwago', 'Pagong', 'Unggoy', 'Lumba-lumba'],
+      ceb: ['Tarsier', 'Agila', 'Kabaw', 'Pawikan', 'Tamaraw', 'Butanding', 'Alibangbang', 'Putyukan', 'Bukaw', 'Bao', 'Amo', 'Lumba-lumba']
+    },
+    fruits: {
+      en: ['Mangoes', 'Bananas', 'Pineapples', 'Watermelons', 'Coconuts', 'Papayas', 'Grapes', 'Apples', 'Oranges', 'Strawberries', 'Cherries', 'Lemons'],
+      fil: ['Mangga', 'Saging', 'Pinya', 'Pakwan', 'Niyog', 'Papaya', 'Lansones', 'Rambutan', 'Bayabas', 'Santol', 'Kalamansi', 'Durian'],
+      ceb: ['Mangga', 'Saging', 'Pinya', 'Pakwan', 'Lubi', 'Kapayas', 'Lansones', 'Rambutan', 'Bayabas', 'Santol', 'Lemonsito', 'Durian']
+    },
+    space: {
+      en: ['Sun', 'Moon', 'Stars', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Comets'],
+      fil: ['Araw', 'Buwan', 'Bituin', 'Merkuryo', 'Benus', 'Daigdig', 'Marte', 'Hupiter', 'Saturno', 'Urano', 'Neptuno', 'Kometa'],
+      ceb: ['Adlaw', 'Bulan', 'Bitoon', 'Merkuryo', 'Benus', 'Kalibutan', 'Marte', 'Hupiter', 'Saturno', 'Urano', 'Neptuno', 'Kometa']
+    },
+    heroes: {
+      en: ['Rizal', 'Bonifacio', 'Mabini', 'Luna', 'Aguinaldo', 'Silang', 'Del Pilar', 'Jacinto', 'Tandang Sora', 'Lapu-Lapu', 'Sultan Kudarat', 'Gabriela']
+    }
+  };
+  // A picture for each name above (same order), so children who can't read yet can find their group.
+  // Emoji are drawn by the device; planets have no emoji on older devices, so they are little drawings.
+  const planet = (col, ring) => ({ svg: `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="${col}"/>` +
+    (ring ? '<ellipse cx="20" cy="20" rx="19" ry="5.5" fill="none" stroke="#C9A25A" stroke-width="3" transform="rotate(-20 20 20)"/>' : '') + '</svg>' });
+  // Philippine animals and fruits that have no emoji of their own get little drawings too
+  const draw = inner => ({ svg: `<svg viewBox="0 0 40 40">${inner}</svg>` });
+  const spikes = (cx, cy, r1, r2, n) => Array.from({ length: n * 2 }, (_, i) => {
+    const a = i * Math.PI / n, r = i % 2 ? r2 : r1;
+    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+  const hairs = Array.from({ length: 18 }, (_, i) => {
+    const a = i * Math.PI / 9, x1 = 20 + 11 * Math.cos(a), y1 = 21 + 11 * Math.sin(a), x2 = 20 + 16 * Math.cos(a + 0.25), y2 = 21 + 16 * Math.sin(a + 0.25);
+    return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${i % 2 ? '#7CB342' : '#E85A5A'}" stroke-width="2" stroke-linecap="round"/>`;
+  }).join('');
+  const PICS = {
+    tarsier: draw('<circle cx="9" cy="11" r="6" fill="#8B6239"/><circle cx="31" cy="11" r="6" fill="#8B6239"/><circle cx="9" cy="11" r="3" fill="#C99A6B"/><circle cx="31" cy="11" r="3" fill="#C99A6B"/>' +
+                  '<circle cx="20" cy="22" r="14" fill="#A0784A"/><circle cx="13.5" cy="20" r="7" fill="#F2C14E"/><circle cx="26.5" cy="20" r="7" fill="#F2C14E"/>' +
+                  '<circle cx="13.5" cy="20" r="4.2" fill="#2B1A0E"/><circle cx="26.5" cy="20" r="4.2" fill="#2B1A0E"/><circle cx="12" cy="18.5" r="1.3" fill="#fff"/><circle cx="25" cy="18.5" r="1.3" fill="#fff"/>' +
+                  '<ellipse cx="20" cy="28" rx="2" ry="1.4" fill="#5A3A1E"/><path d="M17 31.5q3 2 6 0" stroke="#5A3A1E" stroke-width="1.4" fill="none" stroke-linecap="round"/>'),
+    pawikan: draw('<ellipse cx="9" cy="15" rx="8" ry="3.2" fill="#8CC084" transform="rotate(-35 9 15)"/><ellipse cx="31" cy="15" rx="8" ry="3.2" fill="#8CC084" transform="rotate(35 31 15)"/>' +
+                  '<ellipse cx="12" cy="32" rx="4.5" ry="2.5" fill="#8CC084" transform="rotate(35 12 32)"/><ellipse cx="28" cy="32" rx="4.5" ry="2.5" fill="#8CC084" transform="rotate(-35 28 32)"/>' +
+                  '<circle cx="20" cy="6" r="4.5" fill="#8CC084"/><circle cx="18.3" cy="5" r=".9" fill="#1D2742"/><circle cx="21.7" cy="5" r=".9" fill="#1D2742"/>' +
+                  '<ellipse cx="20" cy="22" rx="11" ry="13" fill="#2E7D5B"/><path d="M20 12l5 4v6l-5 4-5-4v-6z" fill="#4FA77B"/><path d="M12 22l3-6M28 22l-3-6M12 24l3 4M28 24l-3 4M20 26v7" stroke="#4FA77B" stroke-width="2" stroke-linecap="round"/>'),
+    papaya: draw('<ellipse cx="20" cy="21" rx="12" ry="16" fill="#7CB342"/><ellipse cx="20" cy="21" rx="10" ry="14" fill="#F59E42"/><ellipse cx="20" cy="22" rx="4.5" ry="8.5" fill="#FFD08A"/>' +
+                 '<g fill="#2B2B2B"><circle cx="19" cy="17" r="1.4"/><circle cx="21.5" cy="19" r="1.4"/><circle cx="18.5" cy="21.5" r="1.4"/><circle cx="21" cy="24" r="1.4"/><circle cx="19" cy="26.5" r="1.4"/><circle cx="21" cy="28.5" r="1.2"/></g>'),
+    durian: draw(`<polygon points="${spikes(20, 22, 15, 11, 14)}" fill="#7DA332" stroke="#5E7F1F" stroke-width="1.5" stroke-linejoin="round"/><circle cx="20" cy="22" r="9" fill="#8DB33A"/>` +
+                 '<path d="M20 7V2" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>'),
+    rambutan: draw(hairs + '<circle cx="20" cy="21" r="11" fill="#D8323C"/><ellipse cx="16" cy="17" rx="3" ry="2" fill="#F07A80"/>'),
+    lansones: draw('<path d="M20 3v8" stroke="#7A5A2E" stroke-width="2.5" stroke-linecap="round"/><g fill="#E8D3A0" stroke="#C9A86A" stroke-width="1.5">' +
+                   '<circle cx="14" cy="15" r="6"/><circle cx="26" cy="15" r="6"/><circle cx="20" cy="20" r="6"/><circle cx="12" cy="26" r="6"/><circle cx="28" cy="26" r="6"/><circle cx="20" cy="31" r="6"/></g>'),
+    bayabas: draw('<circle cx="20" cy="22" r="14" fill="#8BC34A"/><ellipse cx="15" cy="17" rx="4" ry="3" fill="#B5DD7A"/><path d="M20 8l-3-4M20 8l3-4M20 8V3" stroke="#5E7F1F" stroke-width="2" stroke-linecap="round"/>'),
+    santol: draw('<circle cx="20" cy="22" r="14" fill="#E3B04B"/><g fill="#C98F2E"><circle cx="13" cy="20" r="1.5"/><circle cx="25" cy="16" r="1.5"/><circle cx="27" cy="27" r="1.5"/><circle cx="17" cy="29" r="1.5"/></g><path d="M20 8V3" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/><ellipse cx="25" cy="5" rx="5" ry="2.5" fill="#6FA03C"/>'),
+    kalamansi: draw('<circle cx="14" cy="22" r="10" fill="#6FA03C"/><ellipse cx="11" cy="19" rx="3" ry="2" fill="#9CCB6B"/><circle cx="28" cy="25" r="9" fill="#5E8C2E"/><circle cx="28" cy="25" r="7.5" fill="#F6A623"/>' +
+                    '<path d="M28 18v14M21 25h14M23 20l10 10M33 20l-10 10" stroke="#FFD27A" stroke-width="1.3"/>')
+  };
+  const SPACE_ICONS = ['☀️', '🌙', '⭐', planet('#9AA0A6'), planet('#E8C27A'), '🌍', planet('#D9502F'), planet('#D9A066'), planet('#E3C27F', true), planet('#7FD6E0'), planet('#3E66D6'), '☄️'];
+  const ICONS = {
+    animals: {
+      en: ['🦁', '🐯', '🦅', '🐬', '🐼', '🦉', '🐢', '🐝', '🦋', '🐘', '🐧', '🐒'],
+      fil: [PICS.tarsier, '🦅', '🐃', PICS.pawikan, '🐂', '🦈', '🦋', '🐝', '🦉', '🐢', '🐒', '🐬'],
+      ceb: [PICS.tarsier, '🦅', '🐃', PICS.pawikan, '🐂', '🦈', '🦋', '🐝', '🦉', '🐢', '🐒', '🐬']
+    },
+    fruits: {
+      en: ['🥭', '🍌', '🍍', '🍉', '🥥', PICS.papaya, '🍇', '🍎', '🍊', '🍓', '🍒', '🍋'],
+      fil: ['🥭', '🍌', '🍍', '🍉', '🥥', PICS.papaya, PICS.lansones, PICS.rambutan, PICS.bayabas, PICS.santol, PICS.kalamansi, PICS.durian],
+      ceb: ['🥭', '🍌', '🍍', '🍉', '🥥', PICS.papaya, PICS.lansones, PICS.rambutan, PICS.bayabas, PICS.santol, PICS.kalamansi, PICS.durian]
+    },
+    space: { en: SPACE_ICONS, fil: SPACE_ICONS, ceb: SPACE_ICONS }
+  };
+  const NAME_STYLES = ['numbers', 'animals', 'fruits', 'space', 'heroes'];
+  const nameSet = style => NAME_SETS[style] && (NAME_SETS[style][LANG.code] || NAME_SETS[style].en);
+  // Group names are kept as places in the name list (not words), so they follow the language:
+  // the 3rd animal is "Eagles" in English and "Kalabaw" in Filipino. -1 means "Group 4" and so on.
+  function pickNames(g) {
+    const set = nameSet(state.groupNameStyle || 'numbers');
+    if (!set) return null;
+    const idx = shuffle(set.map((_, i) => i)).slice(0, g);
+    while (idx.length < g) idx.push(-1);
+    return idx;
+  }
+  // older saves kept the words themselves: find their place in any language's list
+  function labelIndexes() {
+    if (Array.isArray(state.groupLabelIdx)) return state.groupLabelIdx;
+    if (!Array.isArray(state.groupLabels)) return null;
+    const sets = Object.values(NAME_SETS[state.groupNameStyle] || {});
+    return state.groupLabels.map(w => { for (const set of sets) { const i = set.indexOf(w); if (i >= 0) return i; } return -1; });
+  }
+  function groupTitle(gi) {
+    const idx = labelIndexes(), set = nameSet(state.groupNameStyle);
+    const k = idx ? idx[gi] : -1;
+    return (set && k >= 0 && set[k]) || t('group', { n: gi + 1 });
+  }
+  // the picture for a group: its emoji or drawing, a big number for numbered groups,
+  // or the first letter for Filipino heroes
+  function groupIcon(gi) {
+    const el = document.createElement('span'); el.className = 'gicon'; el.setAttribute('aria-hidden', 'true');
+    const idx = labelIndexes(), style = state.groupNameStyle, k = idx ? idx[gi] : -1;
+    const pics = ICONS[style] && (ICONS[style][LANG.code] || ICONS[style].en);
+    const pic = set => set && k >= 0 ? set[k] : null;
+    const p = pic(pics);
+    if (p && p.svg) el.innerHTML = p.svg;   // our own drawing, no outside text
+    else if (p) el.textContent = p;
+    else {
+      el.classList.add('badge');
+      el.textContent = style === 'heroes' && k >= 0 ? groupTitle(gi).charAt(0) : String(gi + 1);
+    }
+    return el;
+  }
+
+  // "N groups" or "groups of N". Never a group of 1 (so at most half the class as groups),
+  // and never more than 12 groups (there are 12 colours and names). Leftovers join other groups.
+  function groupLimits(total = state.students.length) {
+    if (state.groupMode === 'size') {
+      const lo = Math.max(2, Math.ceil(total / 12));
+      return [lo, Math.max(lo, Math.floor(total / 2))];
+    }
+    const hi = Math.max(1, Math.min(12, Math.floor(total / 2)));
+    return [Math.min(2, hi), hi];
+  }
+  const clampNum = (total = state.students.length) => { const [lo, hi] = groupLimits(total); return Math.min(hi, Math.max(lo, state.groupNum || 4)); };
+  function groupCount(total) {
+    const num = clampNum(total);
+    if (state.groupMode === 'size') return Math.max(1, Math.min(12, Math.floor(total / num)));
+    return num;
+  }
+  // Shuffle everyone, then deal them out like cards so groups differ by at most one person.
+  function makeGroups() {
+    const ids = shuffle(state.students.map(s => s.id));
+    const g = groupCount(ids.length);
+    const groups = Array.from({ length: g }, () => []);
+    ids.forEach((id, i) => groups[i % g].push(id));
+    return shuffle(groups);   // so the bigger groups aren't always Group 1, 2...
+  }
+  // Last groups are kept so the teacher can come back to them, unless the class or settings changed.
+  function savedGroups() {
+    const gs = state.groups;
+    if (!Array.isArray(gs) || gs.length !== groupCount(state.students.length)) return null;
+    const ids = new Set(state.students.map(s => s.id)), flat = gs.flat();
+    return flat.length === ids.size && flat.every(id => ids.has(id)) ? gs : null;
+  }
+
+  // ---------- drawing ----------
+  // still: redraw without the cards popping in again (after the window changes size)
+  function renderGroups(groups, waiting, still) {
+    groupsBox.classList.toggle('settled', !!still);
+    (state.groupAnim === 'trains' ? renderTrains : renderCards)(groups, waiting);
+  }
+
+  // engine facing left: cow-catcher, chimney, boiler, cab, wheels
+  const ENGINE = `<svg viewBox="0 0 120 92" aria-hidden="true">
+    <path d="M4 74 L18 52 L22 52 L22 74 Z" fill="#1D2742" opacity=".85"/>
+    <rect x="20" y="36" width="64" height="38" rx="10" fill="currentColor"/>
+    <rect x="30" y="14" width="14" height="24" rx="3" fill="currentColor"/>
+    <rect x="26" y="9" width="22" height="8" rx="3" fill="#1D2742" opacity=".85"/>
+    <rect x="72" y="10" width="42" height="64" rx="8" fill="currentColor"/>
+    <rect x="80" y="18" width="26" height="20" rx="4" fill="#fff" opacity=".9"/>
+    <rect x="20" y="50" width="94" height="5" fill="#fff" opacity=".35"/>
+    <g fill="#1D2742"><circle cx="34" cy="78" r="11"/><circle cx="62" cy="78" r="11"/><circle cx="95" cy="78" r="11"/></g>
+    <g fill="#fff"><circle cx="34" cy="78" r="3.5"/><circle cx="62" cy="78" r="3.5"/><circle cx="95" cy="78" r="3.5"/></g>
+  </svg>`;
+
+  // How wide names are, per pixel of font size, in the school font (for fitting the layout).
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  function widthPer(text, weight = 800) {
+    measureCtx.font = `${weight} 100px Andika, "Century Gothic", system-ui, sans-serif`;
+    return measureCtx.measureText(text || '').width / 100;
+  }
+  function nameWidths(groups) {
+    const byId = new Map(state.students.map(s => [s.id, s]));
+    let whole = 0.5, word = 0.5;
+    for (const g of groups) for (const id of g) {
+      const nm = (byId.get(id) || {}).name || t('friend');
+      whole = Math.max(whole, widthPer(nm));
+      for (const w of nm.split(/\s+/)) word = Math.max(word, widthPer(w));
+    }
+    return { whole, word };
+  }
+
+  // Each child's face/card is found by a Map, not by searching the page with their id
+  // (ids from old backups can hold any character).
+  let slots = new Map();
+
+  // one train per group: the engine (with the group name and picture) pulling a carriage for each child
+  function renderTrains(groups, waiting) {
+    groupsBox.innerHTML = '';
+    groupsBox.classList.add('as-trains');
+    slots = new Map();
+    const byId = new Map(state.students.map(s => [s.id, s]));
+    // Find the biggest face size f that fits every train across and all the trains down the
+    // screen, in 1, 2 or 3 columns of tracks, with names on 1 line or wrapped onto 2.
+    // Each car is as wide as its own child's name needs; names are never cut short.
+    const r = arena.getBoundingClientRect();
+    const W = r.width - 4, H = r.height - 8;
+    const nameOf = id => (byId.get(id) || {}).name || t('friend');
+    const per = new Map();   // width of each name, and of its longest word, per pixel of font size
+    for (const g of groups) for (const id of g) {
+      const nm = nameOf(id);
+      per.set(id, { whole: widthPer(nm), word: Math.max(...nm.split(/\s+/).map(w => widthPer(w))) });
+    }
+    const titleW = Math.max(...groups.map((g, gi) => widthPer(groupTitle(gi), 900)));
+    const carW = (id, z) => {
+      // + border, padding and a little spare, so a word never has to break
+      const p = per.get(id), need = (z.lines === 1 ? p.whole : Math.max(p.word, p.whole / 2 * 1.1)) * z.nmfs * 1.04 + 30;
+      return Math.round(Math.max(z.f + 18, need));
+    };
+    const sizes = (f, lines) => {
+      const z = { f, lines, nmfs: Math.max(14, Math.round(f * 0.34)), ename: Math.max(18, Math.round(f * 0.4)), eng: Math.round(f * 2.85) };
+      const engBox = Math.max(z.eng, z.ename * (titleW + 2.2) + 20);   // the name pill can be wider than the engine
+      z.width = Math.max(...groups.map(g => 24 + engBox + 14 + g.reduce((sum, id) => sum + carW(id, z) + 14, 0)));
+      z.height = 12 + Math.max(f + lines * z.nmfs * 1.12 + 46, z.eng * 0.767 + z.ename * 1.5 + 14);
+      return z;
+    };
+    let best = null;
+    for (let cols = 1; cols <= Math.min(3, groups.length); cols++) {
+      const rows = Math.ceil(groups.length / cols), colW = (W - 28 * (cols - 1)) / cols;
+      for (const lines of [1, 2]) {
+        for (let f = 130; f >= 22; f -= 2) {
+          const z = sizes(f, lines);
+          if (z.width <= colW && rows * z.height + 10 * (rows - 1) <= H) {
+            const score = f * (lines === 1 ? 1 : 0.9);
+            if (!best || score > best.score) best = { ...z, cols, score };
+            break;
+          }
+        }
+      }
+    }
+    if (!best) best = { ...sizes(22, 2), cols: groups.length > 6 ? 2 : 1 };   // too big to fit: drawn small, then shrunk to fit below
+    const st = groupsBox.style;
+    st.setProperty('--tcols', best.cols);
+    st.setProperty('--face', best.f + 'px');
+    st.setProperty('--eng', best.eng + 'px');
+    st.setProperty('--nmfs', best.nmfs + 'px');
+    st.setProperty('--ename', best.ename + 'px');
+    const inner = document.createElement('div'); inner.className = 'trains-inner';
+    groups.forEach((g, gi) => {
+      const track = document.createElement('div'); track.className = 'track';
+      groupColors(track, gi);
+      const train = document.createElement('div'); train.className = 'train';
+      train.style.setProperty('--i', gi);
+      const engine = document.createElement('div'); engine.className = 'engine';
+      const name = document.createElement('span'); name.className = 'ename';
+      const label = document.createElement('span'); label.textContent = groupTitle(gi);
+      name.append(groupIcon(gi), label);
+      engine.append(name); engine.insertAdjacentHTML('beforeend', ENGINE);
+      train.append(engine);
+      for (const id of g) {
+        const s = byId.get(id); if (!s) continue;
+        const c = document.createElement('div'); c.className = 'car' + (waiting ? ' waiting' : '');
+        c.style.setProperty('--car', carW(id, best) + 'px');
+        const link = document.createElement('span'); link.className = 'link';
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+        const face = faceEl(s);
+        c.append(link, face, nm);
+        slots.set(id, { box: c, face });
+        train.append(c);
+      }
+      track.append(train);
+      inner.append(track);
+    });
+    groupsBox.append(inner);
+    // last resort for a very big class on a small screen: shrink the whole picture to fit
+    const k = Math.min(1, (groupsBox.clientWidth - 8) / inner.offsetWidth, (groupsBox.clientHeight - 8) / inner.offsetHeight);
+    inner.style.transform = k < 1 ? `scale(${k.toFixed(3)})` : '';
+  }
+
+  // Cards: a quick estimate ranks every layout (columns of cards, columns of names inside a card),
+  // then the best few are tried for real and the one with the biggest, least-broken names is kept.
+  // Everything has to fit between the top bar and the button, without scrolling.
+  function cardLayouts(groups) {
+    const r = arena.getBoundingClientRect();
+    const W = r.width - 8, H = r.height - 14, g = groups.length, GAP = 16;
+    const most = Math.max(...groups.map(x => x.length));
+    const nw = nameWidths(groups).whole;
+    const list = [];
+    for (let cols = 1; cols <= g; cols++) {
+      const rows = Math.ceil(g / cols);
+      const cw = (W - GAP * (cols - 1)) / cols, ch = (H - GAP * (rows - 1)) / rows;
+      for (let mc = 1; mc <= Math.min(most, 4); mc++) {
+        const mrows = Math.ceil(most / mc);
+        let score = 0;
+        for (const lines of [1, 2]) {   // in units of the name size (see the .gcard and .chip spacing)
+          const nameW = lines === 1 ? nw : nw / 2 * 1.15, extra = lines === 1 ? 0 : 0.5 * Math.min(2, mrows);
+          const fs = Math.min(cw / (mc * (2.85 + nameW) + (mc - 1) * 0.3 + 1.2), ch / (3.85 + mrows * 2.1 + (mrows - 1) * 0.3 + extra));
+          score = Math.max(score, fs * (lines === 1 ? 1 : 0.88));
+        }
+        list.push({ cols, mcols: mc, score, empty: cols * rows - g });
+      }
+    }
+    return list.sort((a, b) => b.score - a.score || a.empty - b.empty);
+  }
+  function fitCards(groups) {
+    const st = groupsBox.style, H = arena.getBoundingClientRect().height;
+    const cap = Math.round(Math.max(18, Math.min(44, H / 9)));   // big on a projector, not silly for a tiny class
+    const titles = [...groupsBox.querySelectorAll('.gt')], names = [...groupsBox.querySelectorAll('.chip .nm')];
+    const fits = () => groupsBox.scrollHeight <= groupsBox.clientHeight + 1 && titles.every(el => el.scrollWidth <= el.clientWidth + 1);
+    const linesAt = fs => names.reduce((m, el) => Math.max(m, Math.round(el.offsetHeight / (fs * 1.1))), 1);
+    let best = null;
+    // the 4 likeliest layouts; only if none of them fits (a big class on a phone) are the rest tried
+    for (const [k, lay] of cardLayouts(groups).entries()) {
+      if (k >= 4 && best && best.fits) break;
+      st.setProperty('--cols', lay.cols); st.setProperty('--mcols', lay.mcols);
+      let lo = 10, hi = cap + 1;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; st.setProperty('--fs', mid + 'px'); if (fits()) lo = mid; else hi = mid; }
+      st.setProperty('--fs', lo + 'px');
+      const ok = fits(), lines = linesAt(lo), score = (ok ? 100 : 0) + lo * (lines <= 1 ? 1 : lines === 2 ? 0.88 : 0.75);
+      if (!best || score > best.score) best = { ...lay, fs: lo, score, fits: ok };
+    }
+    if (best) { st.setProperty('--cols', best.cols); st.setProperty('--mcols', best.mcols); st.setProperty('--fs', best.fs + 'px'); }
+  }
+
+  function renderCards(groups, waiting) {
+    groupsBox.innerHTML = '';
+    groupsBox.classList.remove('as-trains');
+    slots = new Map();
+    const byId = new Map(state.students.map(s => [s.id, s]));
+    groups.forEach((g, gi) => {
+      const card = document.createElement('section');
+      card.className = 'gcard';
+      groupColors(card, gi);
+      card.style.setProperty('--i', gi);
+      const h = document.createElement('h2');
+      const title = document.createElement('span'); title.className = 'gt'; title.textContent = groupTitle(gi);
+      const ct = document.createElement('span'); ct.className = 'ct'; ct.textContent = g.length;
+      h.append(groupIcon(gi), title, ct);
+      const list = document.createElement('div'); list.className = 'members';
+      for (const id of g) {
+        const s = byId.get(id); if (!s) continue;
+        const chip = document.createElement('div');
+        chip.className = 'chip' + (waiting ? ' waiting' : '');
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+        const face = faceEl(s);
+        chip.append(face, nm);
+        slots.set(id, { box: chip, face });
+        list.append(chip);
+      }
+      card.append(h, list);
+      groupsBox.append(card);
+    });
+    fitCards(groups);
+  }
+
+  function placeFlier(f, turn = 0) { f.el.style.transform = `translate(${f.x}px, ${f.y}px) rotate(${turn}deg) scale(${f.sc || 1})`; }
+  // Everyone waits on the playground, spread out so faces don't pile up: each child takes the
+  // best of a few random spots (the one furthest from the others). Big classes stand a bit smaller.
+  function makeFliers() {
+    fliers.forEach(f => f.el.remove());
+    const r = arena.getBoundingClientRect();
+    const W = Math.max(0, r.width - 80), H = Math.max(0, r.height - 92);
+    const list = shuffle(state.students.slice());
+    const sc = Math.max(0.6, Math.min(1, Math.sqrt((r.width * r.height) / (list.length * 130 * 120))));
+    const spots = [];
+    fliers = list.map(s => {
+      const el = document.createElement('div'); el.className = 'flier';
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+      el.append(faceEl(s), nm);
+      arena.append(el);
+      let best = null;
+      for (let k = 0; k < 14; k++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const room = spots.reduce((m, q) => Math.min(m, Math.hypot((q.x - x) * 0.8, q.y - y)), Infinity);
+        if (!best || room > best.room) best = { x, y, room };
+      }
+      spots.push(best);
+      const f = { el, s, x: best.x, y: best.y, vx: 0, vy: 0, sc };
+      placeFlier(f, Math.random() * 16 - 8);
+      return f;
+    });
+  }
+
+  // ---------- sound ----------
+  let actx = null;
+  function audio() {
+    if (!state.sound) return null;
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    if (actx.state === 'suspended') actx.resume();
+    if (!actx.out) {   // everything goes through a limiter, so the louder classroom sounds don't crackle
+      const comp = actx.createDynamicsCompressor(); comp.threshold.value = -6; comp.ratio.value = 12;
+      comp.connect(actx.destination); actx.out = comp;
+    }
+    return actx;
+  }
+  function beep(freq, dur, type = 'square', vol = 0.06, when = 0) {
+    const a = audio(); if (!a) return;
+    const tt = a.currentTime + when;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, tt);
+    g.gain.setValueAtTime(vol, tt); g.gain.exponentialRampToValueAtTime(0.0001, tt + dur);
+    o.connect(g).connect(a.out); o.start(tt); o.stop(tt + dur + 0.02);
+  }
+  const step = () => beep(160 + Math.random() * 120, 0.05, 'triangle', 0.05);   // little running footsteps
+  const count = last => beep(last ? 880 : 620, last ? 0.25 : 0.15, 'square', 0.07);
+  function whistle() {
+    [0, 0.55].forEach(d => { beep(880, 0.42, 'sine', 0.07, d); beep(1110, 0.42, 'sine', 0.05, d); });
+  }
+  const chugSound = n => { for (let i = 0; i < n; i++) beep(85 + (i % 2) * 25, 0.1, 'triangle', 0.24, i * 0.17); };
+  // a train horn as the trains set off
+  const toot = () => [0, 0.32].forEach(d => { beep(392, 0.26, 'sawtooth', 0.09, d); beep(494, 0.26, 'sawtooth', 0.07, d); });
+  // a crowd "yay!": soft noise that swells and fades
+  function cheer(when = 0) {
+    const a = audio(); if (!a) return;
+    const t0 = a.currentTime + when, len = Math.floor(a.sampleRate * 1.6);
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (0.6 + 0.4 * Math.sin(i / a.sampleRate * 38));
+    const src = a.createBufferSource(); src.buffer = buf;
+    const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
+    src.connect(bp).connect(g).connect(a.out); src.start(t0);
+  }
+  const clink = () => { beep(1800, 0.04, 'square', 0.035); beep(2500, 0.05, 'triangle', 0.03, 0.03); };
+  function boomSound() {
+    const a = audio(); if (!a) return;
+    const t0 = a.currentTime, len = Math.floor(a.sampleRate * 0.7);
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+    const src = a.createBufferSource(); src.buffer = buf;
+    const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 650;
+    const g = a.createGain(); g.gain.value = 0.55;
+    src.connect(lp).connect(g).connect(a.out); src.start(t0);
+    const o = a.createOscillator(), og = a.createGain();
+    o.frequency.setValueAtTime(150, t0); o.frequency.exponentialRampToValueAtTime(38, t0 + 0.5);
+    og.gain.setValueAtTime(0.45, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.6);
+    o.connect(og).connect(a.out); o.start(t0); o.stop(t0 + 0.65);
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => beep(f, i === 3 ? 0.6 : 0.15, 'triangle', 0.25, 0.45 + i * 0.11));
+    cheer(0.7);
+  }
+
+  // ---------- the show ----------
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function say(text, small) {
+    msg.hidden = !text;
+    msg.classList.toggle('small', !!small);
+    msg.classList.remove('pop'); void msg.offsetWidth; msg.classList.add('pop');
+    msg.innerHTML = ''; const s = document.createElement('span'); s.textContent = text; msg.append(s);
+  }
+
+  // everyone runs around the play area, faster and faster
+  function runAround(ms) {
+    return new Promise(done => {
+      const r = arena.getBoundingClientRect();
+      const W = Math.max(0, r.width - 80), H = Math.max(0, r.height - 92);
+      for (const f of fliers) { const a = Math.random() * TAU, sp = 170 + Math.random() * 220; f.vx = Math.cos(a) * sp; f.vy = Math.sin(a) * sp; }
+      const t0 = performance.now();
+      let last = t0, lastStep = 0;
+      (function frame(now) {
+        const dt = Math.min(0.05, (now - last) / 1000); last = now;
+        const k = 1 + 1.5 * Math.min(1, (now - t0) / ms);
+        for (const f of fliers) {
+          if (Math.random() < dt * 1.6) {   // now and then, change direction
+            const a = Math.atan2(f.vy, f.vx) + (Math.random() - 0.5) * 2.2, sp = Math.hypot(f.vx, f.vy);
+            f.vx = Math.cos(a) * sp; f.vy = Math.sin(a) * sp;
+          }
+          f.x += f.vx * k * dt; f.y += f.vy * k * dt;
+          if (f.x < 0) { f.x = 0; f.vx = Math.abs(f.vx); } else if (f.x > W) { f.x = W; f.vx = -Math.abs(f.vx); }
+          if (f.y < 0) { f.y = 0; f.vy = Math.abs(f.vy); } else if (f.y > H) { f.y = H; f.vy = -Math.abs(f.vy); }
+          placeFlier(f, Math.sin(now / 80 + f.x / 30) * 14);
+        }
+        if (now - lastStep > 85 / k) { lastStep = now; step(); }
+        if (now - t0 < ms) requestAnimationFrame(frame); else done();
+      })(t0);
+    });
+  }
+
+  async function play() {
+    if (busy || state.students.length < 2) return;
+    busy = true; makeBtn.disabled = true; setBtn.disabled = true; openSettings(false);
+    hint.hidden = true;
+    const groups = makeGroups();
+    state.groupLabelIdx = pickNames(groups.length); state.groupLabels = null;
+
+    if (reduce) {
+      renderGroups(groups, false);
+      finishUp(groups);
+      return;
+    }
+
+    if (state.groupAnim === 'trains') { await playTrains(groups); return; }
+
+    groupsBox.innerHTML = '';
+    makeFliers();
+    say(t('everybodyMove'), true);
+    const running = runAround(4000);
+    await sleep(1700); say('');
+    await sleep(500);  say('3'); count(false);
+    await sleep(600);  say('2'); count(false);
+    await sleep(600);  say('1'); count(true);
+    await running;
+
+    // BOOM
+    say('BOOM!');
+    boomSound();
+    const flash = document.createElement('div'); flash.className = 'flash'; document.body.append(flash);
+    setTimeout(() => flash.remove(), 600);
+    $('screen').classList.remove('shake'); void $('screen').offsetWidth; $('screen').classList.add('shake');
+    confetti();
+
+    renderGroups(groups, true);
+    const ar = arena.getBoundingClientRect();
+    const groupOf = new Map(); groups.forEach((g, gi) => g.forEach(id => groupOf.set(id, gi)));
+    for (const f of fliers) {
+      const slot = slots.get(f.s.id), target = slot && slot.face;
+      if (!target) { f.el.remove(); continue; }
+      const cr = target.getBoundingClientRect();
+      const scale = cr.width / 64;
+      f.el.style.transitionDelay = (groupOf.get(f.s.id) * 70 + Math.random() * 160) + 'ms';
+      f.el.classList.add('fly');
+      f.el.style.transform = `translate(${cr.left - ar.left - 8 * scale}px, ${cr.top - ar.top}px) scale(${scale})`;
+    }
+    await sleep(500); say('');
+    await sleep(800);
+    slots.forEach(sl => sl.box.classList.remove('waiting'));
+    fliers.forEach(f => f.el.remove()); fliers = [];
+    finishUp(groups);
+  }
+
+  // Trains: a railway loop runs around the playground and the children wait beside it.
+  // One train per group drives round and round without stopping. When a train passes a teammate,
+  // that child hops on at the back; children from other teams jump hopefully as it goes by.
+  // Full trains keep going until every train is full, then they park on their own tracks.
+  async function playTrains(groups) {
+    groupsBox.innerHTML = '';
+    const r = arena.getBoundingClientRect();
+    const W = r.width, H = r.height;
+
+    // The railway: a smooth closed track through some points, in one of a few shapes, picked at
+    // random each time. It is measured along its length so anything can be placed on it.
+    const SHAPES = {
+      wavy:   [[.08,.16],[.3,.05],[.5,.3],[.7,.05],[.92,.16],[.95,.5],[.9,.86],[.7,.96],[.5,.7],[.3,.96],[.08,.86],[.05,.5]],
+      zigzag: [[.05,.1],[.5,.06],[.95,.1],[.95,.38],[.6,.42],[.3,.4],[.3,.6],[.6,.6],[.95,.62],[.95,.92],[.5,.95],[.05,.92],[.04,.5]],
+      heart:  [[.5,.28],[.66,.06],[.88,.08],[.96,.3],[.86,.58],[.66,.78],[.5,.96],[.34,.78],[.14,.58],[.04,.3],[.12,.08],[.34,.06]],
+      bean:   [[.12,.2],[.42,.06],[.6,.24],[.88,.1],[.96,.45],[.82,.88],[.5,.8],[.22,.96],[.04,.62]]
+    };
+    const shapeName = Object.keys(SHAPES)[rand(Object.keys(SHAPES).length)];
+    const m = 50, bw = Math.max(200, W - 2 * m), bh = Math.max(160, H - 2 * m);
+    const ctrl = SHAPES[shapeName].map(([u, v]) => ({ x: m + u * bw, y: m + v * bh }));
+    const pts = [];
+    for (let i = 0; i < ctrl.length; i++) {   // Catmull-Rom curve through the points, closed
+      const p0 = ctrl[(i - 1 + ctrl.length) % ctrl.length], p1 = ctrl[i], p2 = ctrl[(i + 1) % ctrl.length], p3 = ctrl[(i + 2) % ctrl.length];
+      for (let k = 0; k < 24; k++) {
+        const t = k / 24, t2 = t * t, t3 = t2 * t;
+        const f = (a0, a1, a2, a3) => 0.5 * (2 * a1 + (-a0 + a2) * t + (2 * a0 - 5 * a1 + 4 * a2 - a3) * t2 + (-a0 + 3 * a1 - 3 * a2 + a3) * t3);
+        pts.push({ x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y) });
+      }
+    }
+    const cum = [0];
+    for (let i = 1; i <= pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i % pts.length].x - pts[i - 1].x, pts[i % pts.length].y - pts[i - 1].y));
+    const L = cum[pts.length];
+    function at(sv) {   // point, direction and side normal at distance sv along the track
+      const d = ((sv % L) + L) % L;
+      let lo = 0, hi = pts.length - 1;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (cum[mid] <= d) lo = mid; else hi = mid - 1; }
+      const A = pts[lo], B = pts[(lo + 1) % pts.length], seg = cum[lo + 1] - cum[lo] || 1, k = (d - cum[lo]) / seg;
+      const ang = Math.atan2(B.y - A.y, B.x - A.x);
+      return { x: A.x + (B.x - A.x) * k, y: A.y + (B.y - A.y) * k, ang, nx: -Math.sin(ang), ny: Math.cos(ang) };
+    }
+
+    // draw the railway: gravel bed, wooden sleepers and two rails
+    const pathOf = list => 'M' + list.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join('L') + 'Z';
+    const railAt = off => pts.map((p, i) => {
+      const a0 = pts[(i - 1 + pts.length) % pts.length], a1 = pts[(i + 1) % pts.length];
+      const ang = Math.atan2(a1.y - a0.y, a1.x - a0.x);
+      return { x: p.x - Math.sin(ang) * off, y: p.y + Math.cos(ang) * off };
+    });
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    track.setAttribute('class', 'railway'); track.setAttribute('width', W); track.setAttribute('height', H);
+    track.innerHTML = `<path class="bed" d="${pathOf(pts)}"/><path class="sleepers" d="${pathOf(pts)}"/>` +
+                      `<path class="rail" d="${pathOf(railAt(7))}"/><path class="rail" d="${pathOf(railAt(-7))}"/>`;
+    arena.append(track);
+
+    // the children wait beside the track, away from the rails and from each other;
+    // in a big class they stand a bit smaller so everyone fits
+    makeFliers();
+    const n = fliers.length;
+    const waitScale = n > 40 ? 0.7 : n > 28 ? 0.8 : 1;
+    const clearance = (x, y) => { let best = Infinity; for (let i = 0; i < pts.length; i += 2) best = Math.min(best, Math.hypot(pts[i].x - x, pts[i].y - y)); return best; };
+    const placed = [];
+    const crowd = (x, y) => placed.reduce((m, q) => Math.min(m, Math.hypot(q.x - x, q.y - y)), Infinity);
+    shuffle(fliers.slice()).forEach((f, k) => {
+      f.pos = ((k + 0.5 + (Math.random() - 0.5) * 0.4) / n) * L;   // their spot along the track
+      const p = at(f.pos);
+      let best = null;
+      for (const off of [56, -56, 100, -100, 145, -145]) {
+        const cx = Math.max(36, Math.min(W - 36, p.x + p.nx * off)), cy = Math.max(30, Math.min(H - 50, p.y + p.ny * off));
+        // room from the track counts most; room from other children next
+        const score = Math.min(clearance(cx, cy), 48) + Math.min(crowd(cx, cy), 70 * waitScale) * 0.8;
+        if (!best || score > best.score) best = { cx, cy, score };
+      }
+      placed.push({ x: best.cx, y: best.cy });
+      f.x = best.cx - 40; f.y = best.cy - 34;
+      f.el.classList.add('waitpick');
+      f.el.style.transform = `translate(${f.x}px, ${f.y}px) scale(${waitScale})`;
+    });
+
+    // one train per group, spread evenly along the track
+    const longest = Math.max(...groups.map(g => g.length));
+    const GAP = Math.max(34, Math.min(66, (L / groups.length - 110) / (longest + 0.5)));
+    const carScale = Math.min(1, GAP / 66);
+    const lap = 16000 + 400 * longest;           // milliseconds for one trip round the track: an easy pace
+    const speed = L / lap;                       // pixels per millisecond
+    const trains = groups.map((g, gi) => {
+      const el = document.createElement('div');
+      el.className = 'mover';
+      groupColors(el, gi);
+      const name = document.createElement('span'); name.className = 'ename';
+      const label = document.createElement('span'); label.textContent = groupTitle(gi);
+      name.append(groupIcon(gi), label);
+      const img = document.createElement('span'); img.className = 'eng-img'; img.innerHTML = ENGINE;
+      el.append(name, img);
+      arena.append(el);
+      return { el, img, color: GROUP_COLORS[gi % GROUP_COLORS.length], s: (gi / groups.length) * L,
+               todo: new Set(g), cars: [] };
+    });
+
+    function placeEngine(tr) {
+      const p = at(tr.s), deg = p.ang * 180 / Math.PI, right = Math.cos(p.ang) >= 0;
+      tr.el.style.transform = `translate(${p.x - 66}px, ${p.y - 98}px)`;
+      // the engine picture faces left: flip it for going right, and turn it with the track
+      tr.img.style.transform = right ? `rotate(${deg}deg) scaleX(-1)` : `rotate(${deg - 180}deg)`;
+    }
+    function placeCars(tr) {
+      tr.cars.forEach((f, i) => {
+        if (f.hopping) return;
+        const p = at(tr.s - (i + 1) * GAP);
+        f.x = p.x - 40; f.y = p.y - 34;
+        f.el.style.transform = `translate(${f.x}px, ${f.y}px) scale(${carScale})`;
+      });
+    }
+    function hopOn(tr, f) {
+      tr.todo.delete(f.s.id); tr.cars.push(f);
+      f.el.classList.remove('waitpick', 'hopeful'); f.el.classList.add('aboard');
+      f.el.style.setProperty('--c', tr.color);
+      f.hopping = true;
+      const p = at(tr.s - tr.cars.length * GAP + speed * 600);   // where the back of the train will be
+      f.el.classList.add('fly', 'hopon');
+      f.el.style.transform = `translate(${p.x - 40}px, ${p.y - 34}px) scale(${carScale})`;
+      setTimeout(() => { f.el.classList.remove('fly', 'hopon'); f.hopping = false; }, 600);
+      clink();
+    }
+    function hope(f) {
+      if (f.el.classList.contains('hopeful')) return;
+      f.el.classList.add('hopeful');
+      setTimeout(() => f.el.classList.remove('hopeful'), 650);
+    }
+
+    say(t('allAboard'), true); whistle();
+    trains.forEach(tr => { placeEngine(tr); });
+    await sleep(1200); say(''); toot();
+
+    await new Promise(done => {
+      let last = performance.now(), lastChug = 0, fullSince = 0;
+      (function frame(now) {
+        const dt = Math.min(50, now - last); last = now;
+        for (const tr of trains) {
+          const before = tr.s;
+          tr.s += speed * dt;
+          // who did the engine just pass?
+          for (const f of fliers) {
+            if (!f.el.classList.contains('waitpick')) continue;
+            const passed = ((f.pos - before) % L + L) % L <= tr.s - before;
+            if (!passed) continue;
+            if (tr.todo.has(f.s.id)) hopOn(tr, f); else hope(f);
+          }
+          placeEngine(tr); placeCars(tr);
+        }
+        if (now - lastChug > 420) { lastChug = now; beep(90 + Math.random() * 20, 0.08, 'triangle', 0.14); }
+        // everyone aboard: one more stretch of track, a whistle, then they park
+        if (!fullSince && trains.every(tr => !tr.todo.size)) { fullSince = now; whistle(); }
+        if (fullSince && now - fullSince > 2600) done();
+        else requestAnimationFrame(frame);
+      })(last);
+    });
+
+    arena.classList.add('fadeout');
+    await sleep(450);
+    trains.forEach(tr => tr.el.remove());
+    fliers.forEach(f => f.el.remove()); fliers = [];
+    track.remove();
+    arena.classList.remove('fadeout');
+    renderGroups(groups, false);   // the trains roll in and park on their tracks
+    chugSound(6);
+    await sleep(900 + groups.length * 90);
+    whistle(); cheer(0.3); confetti();
+    finishUp(groups);
+  }
+
+  function finishUp(groups) {
+    state.groups = groups;
+    save();
+    hint.textContent = t('findTeammates'); hint.hidden = false;
+    makeBtn.textContent = t('shuffleAgain');
+    renderTools();
+    makeBtn.disabled = false; busy = false; setBtn.disabled = false;
+  }
+
+  // ---------- settings on this screen ----------
+  const setBtn = $('setBtn'), setPanel = $('setPanel');
+  function openSettings(open) {
+    setPanel.hidden = !open;
+    setBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  setBtn.onclick = e => { e.stopPropagation(); openSettings(setPanel.hidden); };
+  document.addEventListener('pointerdown', e => { if (!setPanel.hidden && !(e.target.closest && e.target.closest('#setPanel, #setBtn'))) openSettings(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') openSettings(false); });
+  function renderTools() {
+    const [lo, hi] = groupLimits();
+    state.groupNum = clampNum();
+    $('gNum').textContent = state.groupNum;
+    $('gMinus').disabled = state.groupNum <= lo;
+    $('gPlus').disabled = state.groupNum >= hi;
+    $('groupMode').value = state.groupMode || 'count';
+    const ns = $('nameStyle');
+    if (!ns.options.length) {
+      for (const k of NAME_STYLES) { const o = document.createElement('option'); o.value = k; ns.append(o); }
+    }
+    for (const o of ns.options) o.textContent = t('style_' + o.value);
+    ns.value = state.groupNameStyle || 'numbers';
+    $('animStyle').value = state.groupAnim || 'boom';
+    const gt = $('groupTheme');
+    if (!gt.options.length) for (const th of THEMES.list) { const o = document.createElement('option'); o.value = th.key; gt.append(o); }
+    for (const o of gt.options) o.textContent = t('theme_' + o.value);
+    gt.value = state.groupTheme || state.theme || 'balloons';
+    $('newNamesBtn').hidden = ns.value === 'numbers' || !state.groups;
+    $('saveGroupsBtn').disabled = !savedGroups();
+  }
+  // a different number of groups: everyone back on the playground, ready for a new Make groups
+  function changeGroups(fn) {
+    if (busy) return;
+    fn();
+    state.groupNum = clampNum();
+    state.groups = null; state.groupLabels = null; state.groupLabelIdx = null;
+    save();
+    groupsBox.innerHTML = '';
+    makeFliers();
+    hint.textContent = t('groupsWaiting'); hint.hidden = false;
+    makeBtn.textContent = t('makeGroups');
+    renderTools();
+  }
+  $('gMinus').onclick = () => changeGroups(() => state.groupNum--);
+  $('gPlus').onclick = () => changeGroups(() => state.groupNum++);
+  $('groupMode').onchange = () => changeGroups(() => { state.groupMode = $('groupMode').value; state.groupNum = 4; });
+  // new names keep the same groups
+  function relabel() {
+    if (busy) return;
+    state.groupNameStyle = $('nameStyle').value;
+    if (state.groups) {
+      state.groupLabelIdx = pickNames(state.groups.length); state.groupLabels = null;
+      renderGroups(state.groups, false);
+    }
+    save(); renderTools();
+  }
+  $('nameStyle').onchange = relabel;
+  // ---------- save the groups to a file for the teacher ----------
+  // One column per group (name on top, students below), with the class and date above.
+  // Saved as a .csv file, which opens in Excel or Google Sheets.
+  function confirmBox(title, text, ok) {
+    return new Promise(resolve => {
+      const box = $('confirm');
+      $('cfTitle').textContent = title; $('cfText').textContent = text; $('cfOk').textContent = ok;
+      box.hidden = false; $('cfOk').focus();
+      const done = v => { box.hidden = true; document.removeEventListener('keydown', onKey, true); resolve(v); };
+      const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); } };
+      document.addEventListener('keydown', onKey, true);
+      $('cfOk').onclick = () => done(true);
+      $('cfCancel').onclick = () => done(false);
+      box.onclick = e => { if (e.target === box) done(false); };
+    });
+  }
+  const pad = n => String(n).padStart(2, '0');
+  function groupsFileName() {
+    const d = new Date();
+    const cls = (state.className || 'class').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim().replace(/\s+/g, '-');
+    return `${cls}-groups-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.csv`;
+  }
+  function groupsCsv(groups) {
+    // a cell starting with = + - @ (or a tab/return) could run as a formula in Excel: add ' so it stays text
+    const cell = v => { let x = String(v); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return `"${x.replace(/"/g, '""')}"`; };
+    const byId = new Map(state.students.map(s => [s.id, s]));
+    const rows = [
+      [t('csvClass'), state.className || ''],
+      [t('csvDate'), new Date().toLocaleString()],
+      [],
+      groups.map((g, gi) => groupTitle(gi))
+    ];
+    const longest = Math.max(...groups.map(g => g.length));
+    for (let i = 0; i < longest; i++) rows.push(groups.map(g => (g[i] && byId.get(g[i]) ? byId.get(g[i]).name : '')));
+    return '\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n');   // the mark at the start lets Excel read ñ and accents
+  }
+  $('saveGroupsBtn').onclick = async () => {
+    const groups = savedGroups();
+    if (!groups) return;
+    openSettings(false);
+    const file = groupsFileName();
+    const yes = await confirmBox(t('saveGroupsTitle'), t('saveGroupsText', { file }), t('saveGroups'));
+    if (!yes) return;
+    const blob = new Blob([groupsCsv(groups)], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = file;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    const before = hint.textContent;
+    hint.textContent = t('groupsSaved');
+    setTimeout(() => { if (hint.textContent === t('groupsSaved')) hint.textContent = before; }, 3500);
+  };
+
+  $('groupTheme').onchange = () => {
+    state.groupTheme = $('groupTheme').value;
+    THEMES.paint(state.groupTheme, $('balloons'), reduce);
+    save();
+  };
+  // Boom or Trains: groups already made are redrawn in the new style
+  $('animStyle').onchange = () => {
+    if (busy) return;
+    state.groupAnim = $('animStyle').value;
+    if (state.groups && savedGroups()) renderGroups(state.groups, false);
+    save();
+  };
+  $('newNamesBtn').onclick = relabel;
+
+  // ---------- confetti ----------
+  let confettiRaf = null;
+  function confetti() {
+    if (reduce) return;
+    const c = $('confetti'), cx = c.getContext('2d');
+    const d = window.devicePixelRatio || 1;
+    c.hidden = false; c.width = innerWidth * d; c.height = innerHeight * d;
+    cx.setTransform(d, 0, 0, d, 0, 0);
+    const cols = ['#FFC83D', '#E8467C', '#23A86A', '#2F7BEA', '#7558F0', '#F08A24'];
+    const parts = Array.from({ length: 220 }, () => ({
+      x: innerWidth / 2 + (Math.random() - .5) * 200, y: innerHeight * 0.45,
+      vx: (Math.random() - .5) * 22, vy: -Math.random() * 16 - 5,
+      w: 7 + Math.random() * 8, h: 9 + Math.random() * 10,
+      r: Math.random() * Math.PI, vr: (Math.random() - .5) * .35, col: cols[(Math.random() * cols.length) | 0]
+    }));
+    const start = performance.now();
+    cancelAnimationFrame(confettiRaf);
+    (function frame(now) {
+      const tt = now - start;
+      cx.clearRect(0, 0, innerWidth, innerHeight);
+      cx.globalAlpha = Math.max(0, 1 - Math.max(0, tt - 2400) / 1000);
+      for (const p of parts) {
+        p.vy += 0.38; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r);
+        cx.fillStyle = p.col; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2)));
+        cx.restore();
+      }
+      if (tt < 3400) confettiRaf = requestAnimationFrame(frame);
+      else { cx.clearRect(0, 0, innerWidth, innerHeight); c.hidden = true; }
+    })(start);
+  }
+
+  // ---------- teacher exit: press and hold ----------
+  const tBtn = $('teacherBtn'), tFill = $('teacherFill');
+  const HOLD = 1200;
+  let holdStart = 0, holdRaf = null;
+  function holdBegin(e) {
+    if (e) e.preventDefault();
+    if (holdStart) return;
+    holdStart = performance.now();
+    $('teacherLbl').textContent = $('teacherShort').textContent = t('keepHolding');
+    (function stepHold(now) {
+      const p = Math.min(1, (now - holdStart) / HOLD);
+      tFill.style.transform = `scaleX(${p})`;
+      if (p >= 1) { location.href = 'index.html'; return; }
+      holdRaf = requestAnimationFrame(stepHold);
+    })(holdStart);
+  }
+  function holdEnd() {
+    holdStart = 0; cancelAnimationFrame(holdRaf);
+    tFill.style.transform = 'scaleX(0)';
+    $('teacherLbl').textContent = t('holdTeacher'); $('teacherShort').textContent = t('teacherShort');
+  }
+  tBtn.addEventListener('pointerdown', holdBegin);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => tBtn.addEventListener(ev, holdEnd));
+  tBtn.addEventListener('contextmenu', e => e.preventDefault());
+  tBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); holdBegin(e); } });
+  tBtn.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') holdEnd(); });
+  tBtn.addEventListener('click', e => e.preventDefault());
+
+  // ---------- full screen ----------
+  const fsBtn = $('fsBtn');
+  const ENTER = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  const EXIT = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+  if (!document.fullscreenEnabled) fsBtn.hidden = true;
+  document.addEventListener('fullscreenchange', () => {
+    const on = !!document.fullscreenElement;
+    $('fsLbl').textContent = on ? t('exitFullScreen') : t('fullScreen');
+    $('fsIcon').innerHTML = on ? EXIT : ENTER;
+    fsBtn.title = on ? t('exitFullTip') : t('fullTip');
+  });
+  let fsNoteTimer;
+  function fsRefused() {
+    if (document.fullscreenElement) return;
+    $('fsLbl').textContent = t('notAvailable');
+    clearTimeout(fsNoteTimer);
+    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = t('fullScreen'); }, 2500);
+  }
+  fsBtn.onclick = () => {
+    try {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      document.documentElement.requestFullscreen().catch(fsRefused);
+      setTimeout(fsRefused, 800);
+    } catch (e) { fsRefused(); }
+  };
+
+  // ---------- start ----------
+  makeBtn.onclick = play;
+  document.addEventListener('keydown', e => {
+    if (e.target === tBtn || (e.target.closest && e.target.closest('#setPanel, #setBtn, #confirm'))) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); play(); }
+  });
+  // keep the running faces inside the play area when the window changes size
+  // and re-fit finished groups to the new size
+  let refitTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(refitTimer);
+    refitTimer = setTimeout(() => { if (!busy && groupsBox.children.length && savedGroups()) renderGroups(state.groups, false, true); }, 150);
+    if (busy || !fliers.length) return;
+    const r = arena.getBoundingClientRect();
+    for (const f of fliers) { f.x = Math.min(f.x, Math.max(0, r.width - 80)); f.y = Math.min(f.y, Math.max(0, r.height - 92)); placeFlier(f); }
+  });
+
+  function show() {
+    LANG.set(state.lang);
+    THEMES.paint(state.groupTheme || state.theme || 'balloons', $('balloons'), reduce);   // Group Time's own theme
+    $('classTitle').textContent = state.className || t('groupTime');
+    document.title = (state.className ? state.className + ' · ' : '') + t('groupTime');
+    const enough = state.students.length >= 2;
+    $('msgEmpty').hidden = enough;
+    $('msgEmptyText').textContent = t('needTwo');
+    makeBtn.hidden = !enough;
+    hint.hidden = !enough;
+    setBtn.hidden = !enough;
+    if (!enough) return;
+    renderTools();
+    const saved = savedGroups();
+    if (saved) {
+      renderGroups(saved, false);
+      hint.textContent = t('findTeammates');
+      makeBtn.textContent = t('shuffleAgain');
+    } else {
+      makeFliers();   // everyone waiting on the playground
+      hint.textContent = t('groupsWaiting');
+      makeBtn.textContent = t('makeGroups');
+    }
+  }
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.addEventListener('pageshow', async e => { if (e.persisted) { await load(); show(); } });
+  load().then(show);
+  // layouts are measured in the school font, so measure again once it has loaded
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load('800 40px Andika'), document.fonts.load('900 40px Andika')]).then(() => {
+      if (!busy && groupsBox.children.length && savedGroups()) renderGroups(state.groups, false, true);
+    }, () => {});
+  }
+})();
+</script>
+</body>
+</html>

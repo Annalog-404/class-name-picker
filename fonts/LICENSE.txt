@@ -1,0 +1,3 @@
+Andika font: Copyright SIL International (https://software.sil.org/andika/).
+Licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org).
+Andika is designed for children learning to read: it uses the school-style "a" and "g".

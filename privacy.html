@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>About &amp; privacy · Class Name Picker</title>
+<meta name="description" content="What Class Name Picker stores, and what it never does. Everything stays on the teacher's device.">
+<meta name="theme-color" content="#FFC83D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+/* About & privacy: a plain reading page in the app's colours. Works offline like the rest of the app. */
+:root {
+  --bg: #EAF4FF;
+  --panel: #FFFFFF;
+  --ink: #1D2742;
+  --muted: #5B6785;
+  --line: #D5E1F0;
+  --sun: #FFC83D;
+  --leaf: #23A86A;
+  --sky: #2F7BEA;
+  --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.6; }
+.page {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--sky); font-weight: 700; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+header { display: flex; align-items: center; gap: 14px; margin: 18px 0 8px; }
+header img { width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 3px 0 #E9A800; }
+h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 20px; max-width: 60ch; }
+section { background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 18px 20px; margin-bottom: 16px; }
+h2 { margin: 0 0 8px; font-size: 20px; }
+ul { margin: 0; padding-left: 1.2em; }
+li + li { margin-top: 4px; }
+p { margin: 0 0 8px; max-width: 65ch; }
+p:last-child { margin-bottom: 0; }
+.checks { list-style: none; padding: 0; display: grid; gap: 8px; }
+.checks li { display: flex; gap: 10px; align-items: flex-start; }
+.checks li::before {
+  content: "✓"; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--leaf); color: #fff;
+  display: grid; place-items: center; font-weight: 900; font-size: 14px; margin-top: 2px;
+}
+.small { font-size: 14px; color: var(--muted); }
+a:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Back to teacher setup</a>
+
+  <header>
+    <img src="icons/icon-192.png" alt="">
+    <h1>About &amp; privacy</h1>
+  </header>
+  <p class="lead">Class Name Picker is a free classroom tool for picking who recites and making groups. It is built so that children's names and photos never leave this device.</p>
+
+  <section>
+    <h2>Safe for your class</h2>
+    <ul class="checks">
+      <li>No information is sent over the internet. There is no server that receives data.</li>
+      <li>No accounts, passwords or sign-in.</li>
+      <li>No ads, trackers, analytics or cookies.</li>
+      <li>No other websites are contacted. Every page has a security rule that blocks it.</li>
+      <li>No camera, microphone or location. Photos are chosen with the normal file picker.</li>
+      <li>No programs are installed. "Install app" only adds a shortcut to this web page.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What is saved, and where</h2>
+    <p>Only on this device, in this browser's own storage:</p>
+    <ul>
+      <li>class names, students' names and photos (made small)</li>
+      <li>settings such as language, theme, sounds and group options</li>
+      <li>who has been called, and the last groups made</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Files you save</h2>
+    <p><strong>Save backup</strong> saves one class as a <code>.json</code> file. <strong>Save these groups</strong> saves the group lists as a <code>.csv</code> file for Excel or Google Sheets. Both are made on this device and go to your Downloads folder. Keep them private, because they contain children's names.</p>
+  </section>
+
+  <section>
+    <h2>Working offline</h2>
+    <p>The first time the app opens, the browser keeps a copy of the app's own files (not your class data), so it works without internet. When it is opened online later, it checks for a newer version.</p>
+  </section>
+
+  <section>
+    <h2>Removing data</h2>
+    <ul>
+      <li>One class: <strong>Class options → Delete this class</strong> on the teacher screen.</li>
+      <li>One student: the <strong>×</strong> on the student's card.</li>
+      <li>Everything: clear this website's data in the browser settings, or uninstall the app.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Children's privacy</h2>
+    <p>The app is run by the teacher. Children only watch Spin Time and Group Time. No information about children is collected by anyone other than the teacher, on the teacher's own device, in line with the Philippine Data Privacy Act of 2012 (RA 10173).</p>
+  </section>
+
+  <p class="small">Free and open source under the MIT License. The Andika font is © SIL International, under the SIL Open Font License 1.1.</p>
+</main>
+</body>
+</html>
