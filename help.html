@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: the browser may only load this app's own files and may not contact any other website -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>How to use · Class Name Picker</title>
+<meta name="description" content="Step-by-step guide for teachers: set up a class, run Spin Time and Group Time, and keep backups.">
+<meta name="theme-color" content="#FFC83D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+/* How to use: a teacher's guide in the app's colours. Works offline like the rest of the app.
+   Button names are shown as small chips that look like the real buttons. */
+:root {
+  --bg: #EAF4FF;
+  --panel: #FFFFFF;
+  --ink: #1D2742;
+  --muted: #5B6785;
+  --line: #D5E1F0;
+  --sun: #FFC83D;
+  --sun-deep: #E9A800;
+  --leaf: #23A86A;
+  --sky: #2F7BEA;
+  --berry: #E8467C;
+  --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.6; }
+.page {
+  max-width: 780px; margin: 0 auto;
+  padding-block: 24px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--sky); font-weight: 700; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+header { display: flex; align-items: center; gap: 14px; margin: 18px 0 8px; }
+header img { width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 3px 0 var(--sun-deep); }
+h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 18px; max-width: 62ch; }
+
+/* jump-to chips */
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
+.jump a {
+  display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line);
+  color: var(--ink); text-decoration: none; font-weight: 700; font-size: 15px;
+}
+.jump a:hover { border-color: var(--sky); color: var(--sky); }
+
+section { background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 20px 22px; margin-bottom: 18px; scroll-margin-top: 16px; }
+h2 { margin: 0 0 10px; font-size: 22px; display: flex; align-items: center; gap: 10px; }
+h2 .tag { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 2px 10px; }
+.tag.spin { background: var(--sun-deep); }
+.tag.group { background: var(--leaf); }
+.tag.teacher { background: var(--sky); }
+h3 { margin: 18px 0 6px; font-size: 18px; }
+p { margin: 0 0 10px; max-width: 66ch; }
+ol, ul { margin: 0 0 10px; padding-left: 1.4em; }
+li + li { margin-top: 6px; }
+ol.steps { list-style: none; padding: 0; counter-reset: step; display: grid; gap: 10px; }
+ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; align-items: start; margin: 0; }
+ol.steps > li::before {
+  content: counter(step); width: 30px; height: 30px; border-radius: 50%; background: var(--sun); color: var(--ink);
+  display: grid; place-items: center; font-weight: 900; font-size: 15px; box-shadow: 0 2px 0 var(--sun-deep);
+}
+/* a button name, drawn like the button */
+.b {
+  display: inline-block; white-space: nowrap; font-weight: 800; font-size: .9em; line-height: 1.3;
+  padding: 1px 9px; border-radius: 9px; border: 2px solid var(--line); background: #F8FBFF;
+}
+.b.y { background: var(--sun); border-color: var(--sun-deep); }
+.b.g { background: var(--leaf); border-color: #17804F; color: #fff; }
+.b.bl { background: var(--sky); border-color: var(--sky); color: #fff; }
+.b.r { color: var(--berry); }
+.tip { background: #FFF6D8; border: 2px solid #F3DDA0; border-radius: 12px; padding: 10px 14px; margin: 10px 0 0; }
+.warn { background: #FFECEF; border: 2px solid #F7C2CF; border-radius: 12px; padding: 10px 14px; margin: 10px 0 0; }
+.tip strong, .warn strong { display: block; margin-bottom: 2px; }
+code { background: #EEF3FA; padding: 1px 6px; border-radius: 6px; font-family: inherit; font-weight: 700; }
+dl { margin: 0; }
+dt { font-weight: 800; margin-top: 12px; }
+dt:first-child { margin-top: 0; }
+dd { margin: 2px 0 0; color: var(--ink); }
+.small { font-size: 14px; color: var(--muted); }
+a { color: var(--sky); }
+a:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Back to teacher setup</a>
+
+  <header>
+    <img src="icons/icon-192.png" alt="">
+    <h1>How to use Class Name Picker</h1>
+  </header>
+  <p class="lead">A quick guide for teachers. Set up your class once, then use <strong>Spin Time</strong> to pick who recites and <strong>Group Time</strong> to make groups. Everything works without internet.</p>
+
+  <ul class="jump" aria-label="Jump to">
+    <li><a href="#start">Start here</a></li>
+    <li><a href="#class">Set up a class</a></li>
+    <li><a href="#spin">Spin Time</a></li>
+    <li><a href="#groups">Group Time</a></li>
+    <li><a href="#backup">Backups</a></li>
+    <li><a href="#tips">Classroom tips</a></li>
+    <li><a href="#problems">Problems</a></li>
+  </ul>
+
+  <section id="start">
+    <h2>Start here</h2>
+    <ol class="steps">
+      <li><span>Open the app <strong>once while connected to the internet</strong>. It saves itself on the device so it works offline after that.</span></li>
+      <li><span>To get an app icon: press <span class="b g">Install app</span> at the top (Chrome, Edge, Android, Chromebook). On iPhone or iPad, open it in Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</span></li>
+      <li><span>Want to see how it works first? With an empty class, press <span class="b">Try it with sample names</span>.</span></li>
+    </ol>
+  </section>
+
+  <section id="class">
+    <h2><span class="tag teacher">Teacher setup</span> Set up a class</h2>
+    <h3>Your classes</h3>
+    <ol class="steps">
+      <li><span>Press <span class="b">+ New class</span> and type its name, for example <em>Grade 1 Sampaguita</em>.</span></li>
+      <li><span>Each class has its own tab under <strong>Your classes</strong>. Tap a tab to switch. Each class keeps its own students, photos, called list, themes and groups.</span></li>
+      <li><span>To rename a class, press the pencil ✎ next to its name.</span></li>
+    </ol>
+
+    <h3>Add students</h3>
+    <ul>
+      <li><strong>With photos:</strong> press <span class="b bl">Add student photos</span> and choose all the photos at once (or drag them onto the page). Name each photo file with the child's name, like <code>Maria.jpg</code> or <code>Juan_Cruz.jpg</code>, and the names fill in by themselves.</li>
+      <li><strong>Without photos:</strong> type names in the box and press <span class="b">Add</span>. Use commas to add many at once: <code>Ana, Jose, Pedro</code>.</li>
+      <li>Photos can be up to 20 MB. They are made small automatically, so phone photos are fine.</li>
+      <li>Click a name to fix its spelling. Use the camera 📷 on a card to add or change a photo, and <span class="b r">×</span> to remove a child.</li>
+    </ul>
+    <div class="tip"><strong>Two children with the same name?</strong> The app warns you. Add a last initial, like <em>Lily S</em> and <em>Lily G</em>, so the children can tell them apart.</div>
+
+    <h3>Class settings</h3>
+    <ul>
+      <li><strong>Kids' language</strong>: English, Filipino or Bisaya for the children's screens. The teacher screen stays in English.</li>
+      <li><strong>Sounds</strong>: turn the spinning clicks, drumroll and cheers on or off.</li>
+      <li><strong>Class options</strong>: where you find <span class="b r">Delete this class</span>. It always asks first.</li>
+    </ul>
+  </section>
+
+  <section id="spin">
+    <h2><span class="tag spin">Spin Time</span> Pick who recites</h2>
+    <ol class="steps">
+      <li><span>Press <span class="b y">Start Spin Time</span>. The children's screen opens with a big name wheel.</span></li>
+      <li><span>Tap the wheel or the <strong>SPIN</strong> button (or press the Space bar). The wheel spins, slows down, and stops on a name.</span></li>
+      <li><span>The winner's photo and name pop up. Press <span class="b y">Yay!</span> to close it.</span></li>
+      <li><span>Called children are listed under <strong>Already called</strong>. When everyone has had a turn, press <span class="b y">Play again</span>.</span></li>
+    </ol>
+    <h3>Settings (top corner)</h3>
+    <dl>
+      <dt>Theme</dt><dd>The background, such as Space, Math or Philippines. Spin Time and Group Time each have their own.</dd>
+      <dt>Everyone gets a turn before anyone repeats</dt><dd>On: a child leaves the wheel after being picked. Off: anyone can be picked again.</dd>
+      <dt>Quick spin</dt><dd>A shorter spin, about 3 seconds, for busy days or big classes.</dd>
+      <dt><span class="b">Start a new round</span></dt><dd>Puts everyone back on the wheel. It asks first.</dd>
+    </dl>
+    <p class="small">Settings are locked while the wheel is spinning.</p>
+  </section>
+
+  <section id="groups">
+    <h2><span class="tag group">Group Time</span> Make groups</h2>
+    <ol class="steps">
+      <li><span>Press <span class="b g">Start Group Time</span>. The children wait on the playground.</span></li>
+      <li><span>Open <span class="b">Settings</span> (top corner) to choose how many groups, the names and the show.</span></li>
+      <li><span>Press <span class="b y">Make groups!</span>. Watch the show, then the groups appear on screen.</span></li>
+      <li><span>Not happy with the mix? Press <span class="b y">Shuffle again</span>.</span></li>
+    </ol>
+    <h3>Settings</h3>
+    <dl>
+      <dt>Groups</dt><dd>Choose a <strong>number of groups</strong>, or <strong>students per group</strong>. Groups are never more than one child apart in size, and there is never a group of 1.</dd>
+      <dt>Names</dt><dd>Animals, Fruits, Space, Filipino heroes or Numbers. Each group gets a picture too, so children who can't read yet can find theirs. <span class="b">New names</span> keeps the groups and changes only the names.</dd>
+      <dt>Show</dt><dd><strong>Boom</strong>: everyone runs around, a 3-2-1 countdown, then boom! <strong>Trains</strong>: trains drive along a winding track and pick up their teammates.</dd>
+      <dt>Theme</dt><dd>Group Time's own background.</dd>
+      <dt><span class="b bl">Save these groups</span></dt><dd>Saves the groups as a file in your Downloads folder, one column per group. It opens in Excel or Google Sheets, for your records.</dd>
+    </dl>
+    <p class="small">Starting Group Time from the teacher screen always begins with fresh groups.</p>
+  </section>
+
+  <section id="backup">
+    <h2>Backups and moving to another device</h2>
+    <p>Classes are saved on the device you use, in that browser. They are not on the internet, so another device won't see them.</p>
+    <ol class="steps">
+      <li><span>On the old device, choose the class and press <span class="b">Save backup</span>. A file like <code>Grade-1-Sampaguita-backup.json</code> goes to Downloads.</span></li>
+      <li><span>Copy that file to the new device (USB stick, email to yourself, Google Drive).</span></li>
+      <li><span>On the new device, press <span class="b">Open backup</span> and choose the file. It is added as a new class.</span></li>
+    </ol>
+    <div class="tip"><strong>Good habit</strong> Save a backup of each class once a week, and before changing devices.</div>
+  </section>
+
+  <section id="tips">
+    <h2>Classroom tips</h2>
+    <ul>
+      <li>Connect to a projector or TV and press <strong>Full screen</strong> so the children see only the wheel or groups.</li>
+      <li>To go back to the teacher screen, <strong>press and hold</strong> <span class="b">Hold for Teacher</span> for about a second. A quick tap does nothing, so children can't leave by accident.</li>
+      <li>Turn the speakers up: the drumroll and cheers make it exciting.</li>
+      <li>Let a child press SPIN or Make groups! for you. They love it.</li>
+    </ul>
+  </section>
+
+  <section id="problems">
+    <h2>If something goes wrong</h2>
+    <dl>
+      <dt>I don't see the newest version</dt><dd>Close the app completely and open it again while online. Updates install themselves. <strong>Don't uninstall the app to update it</strong>: on some devices that deletes your classes.</dd>
+      <dt>"This device ran out of room"</dt><dd>Press <span class="b">Save backup</span> for your classes, then delete classes you no longer use, or remove some photos.</dd>
+      <dt>A photo won't add</dt><dd>Use a JPG or PNG photo under 20 MB. Some iPhone photos (HEIC) need to be saved as JPG first.</dd>
+      <dt>My classes are gone</dt><dd>Check you are on the same device and browser as before. Clearing the browser's data also clears the classes, so open your last backup with <span class="b">Open backup</span>.</dd>
+      <dt>No sound</dt><dd>Check <strong>Sounds</strong> is ticked on the teacher screen and the device volume is up. Sound starts after the first tap.</dd>
+    </dl>
+  </section>
+
+  <p class="small">See <a href="privacy.html">About &amp; privacy</a>: the app never sends children's names or photos anywhere. Found a problem? Report it at github.com/Annalog-404/class-name-picker/issues (please don't include children's names or photos).</p>
+</main>
+</body>
+</html>

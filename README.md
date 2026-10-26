@@ -38,6 +38,7 @@ The first time the app is opened online, the browser saves a copy of its files (
 | `index.html` | Teacher setup (English) |
 | `spin.html` | Spin Time: the children's name wheel |
 | `groups.html` | Group Time: the children's group maker |
+| `help.html` | How to use: step-by-step guide for teachers |
 | `privacy.html` | About & privacy page shown in the app |
 | `lang.js` | Words for the children's screens in English, Filipino and Bisaya |
 | `themes.js` | Background themes |
