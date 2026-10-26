@@ -212,10 +212,6 @@ button.go { cursor: pointer; }
 .card .rm svg { width: 14px; height: 14px; }
 .card:hover .rm, .card .rm:focus-visible { opacity: 1; }
 @media (hover: none) { .card .rm, .card .pic label.swap { opacity: 1; } }
-.card .badge {
-  position: absolute; top: 12px; left: 12px; font-size: 13px; font-weight: 800; letter-spacing: .04em;
-  background: var(--leaf); color: #fff; border-radius: 999px; padding: 2px 8px;
-}
 
 /* Same-name warning */
 .dup-warn {
@@ -756,10 +752,6 @@ button.go { cursor: pointer; }
       };
 
       card.append(pic, nm, rm);
-      if (s.picked && state.noRepeat) {
-        const b = document.createElement('span'); b.className = 'badge'; b.textContent = t('hadTurn');
-        card.append(b);
-      }
       els.roster.append(card);
     }
     updateDupes();

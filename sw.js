@@ -1,6 +1,6 @@
 // Saves the app on the device the first time it opens, so it keeps working without internet.
 // Change VERSION whenever any file changes so devices pick up the update.
-const VERSION = 'picker-v56';
+const VERSION = 'picker-v59';
 const FILES = [
   './',
   './index.html',

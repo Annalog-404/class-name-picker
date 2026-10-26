@@ -124,7 +124,6 @@ window.LANG = (() => {
       emptyText1: 'Click <b>Add student photos</b> and pick all the photos at once, or drag them onto this page. Name each photo file with the student\'s name, like <code>Maria.jpg</code>, and the names fill in by themselves.',
       emptyText2: 'No photos? Type names in the box above.',
       trySample: 'Try it with sample names',
-      hadTurn: 'Had a turn',
       changePhoto: 'Change photo',
       addPhoto: 'Add photo',
       photoFor: 'Photo for {name}',
