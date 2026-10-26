@@ -16,4 +16,4 @@ Only the latest version, the one served by the app's website, is supported. Open
 
 ## Reporting a problem
 
-If you find a security or privacy problem, please open an issue on this project's GitHub page and **do not include children's names or photos**. Describe what you saw and how to make it happen again. We aim to reply within 7 days.
+If you find a security or privacy problem, please open an issue at https://github.com/Annalog-404/class-name-picker/issues and **do not include children's names or photos**. Describe what you saw and how to make it happen again. We aim to reply within 7 days.

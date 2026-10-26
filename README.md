@@ -7,6 +7,10 @@ A free classroom app for Grade 1 teachers. It picks who recites next with a name
 - **Teacher setup**: several classes, student photos and names, backups.
 - Children's screens in **English, Filipino (Tagalog) and Bisaya (Cebuano)**, in a school-style font (Andika) that young readers recognise.
 
+**Open the app:** https://annalog-404.github.io/class-name-picker/
+
+Open it once while online (or press **Install app**), and it keeps working without internet after that.
+
 ## Safe to use
 
 This is a plain website. There is nothing to download or run outside the browser.
