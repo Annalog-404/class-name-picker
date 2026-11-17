@@ -29,7 +29,7 @@ Read the full [privacy policy](PRIVACY.md). The same information is shown inside
 
 ## How it works offline
 
-The first time the app is opened online, the browser saves a copy of its files (a standard "service worker"). After that it opens and works with no internet. Class lists and photos are stored in the browser's own storage on that device (IndexedDB). Use **Save backup** on the teacher screen to keep a copy or move a class to another device.
+The first time the app is opened online, the browser saves a copy of its files (a standard "service worker"). After that it opens and works with no internet. Class lists and photos are stored in the browser's own storage on that device (IndexedDB). Use **Save backup** on the teacher screen to keep a copy of all your classes or move them to another device.
 
 ## Files
 

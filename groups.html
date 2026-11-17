@@ -81,16 +81,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .corner svg { width: 18px; height: 18px; }
 @media (max-width: 520px) { #fsLbl, #setLbl { display: none; } }
 /* phones: icons only, a short Teacher label, so the class name still has room */
-.corner .short { display: none; }
 @media (max-width: 480px) {
   .top { gap: 6px; }
   .title img { display: none; }
   .title h1 { font-size: 20px; }
   .corner { padding: 9px 10px; }
-  .corner .long { display: none; }
-  .corner .short { display: inline; }
 }
-.corner .fill { position: absolute; inset: 0; background: rgba(255,255,255,.75); transform-origin: left; transform: scaleX(0); }
 .corner span.lbl, .corner svg { position: relative; }
 
 /* the play area: group cards, and the running faces on top */
@@ -245,12 +241,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sp-ctrl select { border: 2px solid #D5E1F0; background: #fff; border-radius: 10px; font: inherit; font-weight: 800; padding: 6px 8px; cursor: pointer; max-width: 12em; }
 .sp-btn { align-self: flex-end; border: 2px solid #D5E1F0; background: #fff; border-radius: 10px; font-weight: 800; font-size: 14px; padding: 6px 12px; margin-top: -6px; }
 .sp-btn:hover { background: #F1F6FC; }
+.sp-check { justify-content: flex-start; font-weight: 700; line-height: 1.3; gap: 10px; }
+.sp-check input { width: 22px; height: 22px; accent-color: #23A86A; flex: none; }
 .sp-save {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;
   border: none; background: #2F7BEA; color: #fff; border-radius: 12px; padding: 10px 12px; font-weight: 800; font-size: 15px;
 }
 .sp-save svg { width: 18px; height: 18px; }
 .sp-save:disabled { opacity: .45; cursor: default; }
+.bottom .sp-save { margin-top: 0; border-radius: 999px; padding: 10px 18px; box-shadow: 0 4px 0 #1F5FC0; }
+.undo-bar {   /* sits in the bottom row, so it never covers a group */
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #1D2742; color: #fff; border-radius: 999px; padding: 6px 6px 6px 16px;
+  font-size: 15px; font-weight: 800; box-shadow: 0 4px 0 rgba(29,39,66,.2);
+}
+.undo-bar[hidden] { display: none; }
+.undo-bar button { border: none; background: var(--sun); color: #1D2742; border-radius: 999px; padding: 6px 14px; font-weight: 900; font-size: 15px; }
 .confirm-back { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(29,39,66,.55); }
 .confirm-card {
   background: #fff; border-radius: 22px; padding: 22px; width: min(440px, 100%); text-align: center;
@@ -300,6 +306,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .flier.fly { transition: none; }
 }
 .groups.settled .gcard, .groups.settled .train { animation: none; }
+
+/* Small laptop screens (like a 1366x768 laptop with the browser's bars): smaller buttons and
+   helper text, so the groups keeps the room. Projectors and big screens are not affected. */
+@media (max-height: 760px) {
+  .top { min-height: 44px; }
+  .title img { width: 34px; height: 34px; }
+  .title h1 { font-size: 22px; }
+  .corner { padding: 6px 12px; font-size: 15px; }
+  .hint { font-size: 19px; padding: 4px 16px; }
+  .big-btn { font-size: 20px; padding: 9px 24px; box-shadow: 0 4px 0 var(--sun-deep); }
+  .bottom { min-height: 48px; gap: 10px 14px; }
+}
 </style>
 </head>
 <body>
@@ -311,19 +329,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <img src="icons/icon-192.png" alt="">
       <h1 id="classTitle">Group Time</h1>
     </div>
-    <button class="corner" id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
+    <button class="corner" data-en id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
       <span class="lbl" id="setLbl" data-t="settings">Settings</span>
     </button>
-    <button class="corner" id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen (press Esc to leave)">
+    <button class="corner" data-en id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen (press Esc to leave)">
       <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       <span class="lbl" id="fsLbl" data-t="fullScreen">Full screen</span>
     </button>
-    <button class="corner" id="teacherBtn" type="button" data-t-title="teacherTip" title="Press and hold to go back to Teacher setup">
-      <span class="fill" id="teacherFill"></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-      <span class="lbl long" id="teacherLbl" data-t="holdTeacher">Hold for Teacher</span>
-      <span class="lbl short" id="teacherShort" data-t="teacherShort">Teacher</span>
+    <button class="corner" data-en id="backBtn" type="button" data-t-title="backTip" title="Back to Teacher setup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <span class="lbl" data-t="back">Back</span>
     </button>
   </div>
 
@@ -337,13 +353,23 @@ button { font: inherit; color: inherit; cursor: pointer; }
   </div>
 
   <div class="bottom">
-    <div class="hint" id="hint" data-t="groupsWaiting">Press the button to find your teammates!</div>
+    <div class="hint" id="hint" hidden></div>
     <button class="big-btn" id="makeBtn" type="button" data-t="makeGroups">Make groups!</button>
+    <button type="button" class="sp-save" data-en id="saveGroupsBtn" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+      <span data-t="saveGroups">Save these groups</span>
+    </button>
+    <!-- after Shuffle again: a few seconds to bring the old groups back -->
+    <span class="undo-bar" data-en id="undoBar" hidden role="status">
+      <span data-t="groupsShuffled">New groups made.</span>
+      <button type="button" id="undoBtn" data-t="undo">Undo</button>
+    </span>
   </div>
 </div>
 
+
 <!-- Group Time's own settings; the teacher can change their mind right here -->
-<div class="set-panel" id="setPanel" hidden>
+<div class="set-panel" data-en id="setPanel" hidden>
   <div class="sp-row">
     <span data-t="groupsLabel">Groups</span>
     <div class="sp-ctrl">
@@ -376,14 +402,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     <span data-t="themeLabel">Theme</span>
     <div class="sp-ctrl"><select id="groupTheme"></select></div>
   </label>
-  <button type="button" class="sp-save" id="saveGroupsBtn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
-    <span data-t="saveGroups">Save these groups</span>
-  </button>
+  <label class="sp-row sp-check"><input type="checkbox" id="gpSound"> <span data-t="sounds">Sounds</span></label>
 </div>
 
 <!-- confirmation before saving a file -->
-<div class="confirm-back" id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
+<div class="confirm-back" data-en id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
   <div class="confirm-card">
     <h3 id="cfTitle"></h3>
     <p id="cfText"></p>
@@ -415,6 +438,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   const arena = $('arena'), groupsBox = $('groups'), msg = $('centerMsg'), makeBtn = $('makeBtn'), hint = $('hint');
 
   let state = STORE.blankClass();
+  // children see first names only ("Lily S." when two share one); see STORE.shortNames
+  let shorts = new Map();
+  const shortName = s => (s && (shorts.get(s.id) || s.name)) || t('friend');
   let busy = false;
   let fliers = [];
 
@@ -444,7 +470,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function faceEl(s) {
     const f = document.createElement('span'); f.className = 'face';
     if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; img.draggable = false; f.append(img); }
-    else { const d = document.createElement('span'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); f.append(d); }
+    else { const d = document.createElement('span'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(shortName(s)); f.append(d); }
     return f;
   }
 
@@ -620,7 +646,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     const byId = new Map(state.students.map(s => [s.id, s]));
     let whole = 0.5, word = 0.5;
     for (const g of groups) for (const id of g) {
-      const nm = (byId.get(id) || {}).name || t('friend');
+      const nm = shortName(byId.get(id));
       whole = Math.max(whole, widthPer(nm));
       for (const w of nm.split(/\s+/)) word = Math.max(word, widthPer(w));
     }
@@ -642,7 +668,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     // Each car is as wide as its own child's name needs; names are never cut short.
     const r = arena.getBoundingClientRect();
     const W = r.width - 4, H = r.height - 8;
-    const nameOf = id => (byId.get(id) || {}).name || t('friend');
+    const nameOf = id => shortName(byId.get(id));
     const per = new Map();   // width of each name, and of its longest word, per pixel of font size
     for (const g of groups) for (const id of g) {
       const nm = nameOf(id);
@@ -699,7 +725,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
         const c = document.createElement('div'); c.className = 'car' + (waiting ? ' waiting' : '');
         c.style.setProperty('--car', carW(id, best) + 'px');
         const link = document.createElement('span'); link.className = 'link';
-        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = shortName(s);
         const face = faceEl(s);
         c.append(link, face, nm);
         slots.set(id, { box: c, face });
@@ -778,7 +804,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
         const s = byId.get(id); if (!s) continue;
         const chip = document.createElement('div');
         chip.className = 'chip' + (waiting ? ' waiting' : '');
-        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = shortName(s);
         const face = faceEl(s);
         chip.append(face, nm);
         slots.set(id, { box: chip, face });
@@ -802,7 +828,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     const spots = [];
     fliers = list.map(s => {
       const el = document.createElement('div'); el.className = 'flier';
-      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = shortName(s);
       el.append(faceEl(s), nm);
       arena.append(el);
       let best = null;
@@ -915,9 +941,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
   async function play() {
     if (busy || state.students.length < 2) return;
     busy = true; makeBtn.disabled = true; setBtn.disabled = true; openSettings(false);
-    hint.hidden = true;
+    hint.hidden = true; saveBtn.hidden = true; hideUndo();
+    // the groups on screen now, so a stray Shuffle again can be undone
+    const before = savedGroups() ? { groups: state.groups, labels: state.groupLabels, idx: state.groupLabelIdx } : null;
+    undoSnap = null;
     const groups = makeGroups();
     state.groupLabelIdx = pickNames(groups.length); state.groupLabels = null;
+    pendingUndo = before;
 
     if (reduce) {
       renderGroups(groups, false);
@@ -1139,12 +1169,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
     save();
     hint.textContent = t('findTeammates'); hint.hidden = false;
     makeBtn.textContent = t('shuffleAgain');
-    renderTools();
     makeBtn.disabled = false; busy = false; setBtn.disabled = false;
+    renderTools();
+    if (pendingUndo) {
+      undoSnap = pendingUndo; pendingUndo = null;
+      $('undoBar').hidden = false;
+      clearTimeout(undoTimer); undoTimer = setTimeout(hideUndo, 8000);
+    }
   }
+  let undoSnap = null, pendingUndo = null, undoTimer = null;
+  function hideUndo() { clearTimeout(undoTimer); $('undoBar').hidden = true; undoSnap = null; }
+  $('undoBtn').onclick = () => {
+    if (!undoSnap || busy) return;
+    state.groups = undoSnap.groups; state.groupLabels = undoSnap.labels; state.groupLabelIdx = undoSnap.idx;
+    hideUndo(); save();
+    renderGroups(state.groups, false);
+    renderTools();
+  };
 
   // ---------- settings on this screen ----------
-  const setBtn = $('setBtn'), setPanel = $('setPanel');
+  const setBtn = $('setBtn'), setPanel = $('setPanel'), saveBtn = $('saveGroupsBtn');
   function openSettings(open) {
     setPanel.hidden = !open;
     setBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -1163,15 +1207,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
     if (!ns.options.length) {
       for (const k of NAME_STYLES) { const o = document.createElement('option'); o.value = k; ns.append(o); }
     }
-    for (const o of ns.options) o.textContent = t('style_' + o.value);
+    for (const o of ns.options) o.textContent = LANG.en('style_' + o.value);
     ns.value = state.groupNameStyle || 'numbers';
     $('animStyle').value = state.groupAnim || 'boom';
     const gt = $('groupTheme');
     if (!gt.options.length) for (const th of THEMES.list) { const o = document.createElement('option'); o.value = th.key; gt.append(o); }
-    for (const o of gt.options) o.textContent = t('theme_' + o.value);
+    for (const o of gt.options) o.textContent = LANG.en('theme_' + o.value);
     gt.value = state.groupTheme || state.theme || 'balloons';
     $('newNamesBtn').hidden = ns.value === 'numbers' || !state.groups;
-    $('saveGroupsBtn').disabled = !savedGroups();
+    saveBtn.hidden = busy || !savedGroups();
+    $('gpSound').checked = state.sound !== false;
   }
   // a different number of groups: everyone back on the playground, ready for a new Make groups
   function changeGroups(fn) {
@@ -1179,10 +1224,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     fn();
     state.groupNum = clampNum();
     state.groups = null; state.groupLabels = null; state.groupLabelIdx = null;
+    hideUndo();
     save();
     groupsBox.innerHTML = '';
     makeFliers();
-    hint.textContent = t('groupsWaiting'); hint.hidden = false;
+    hint.hidden = true;   // before groups are made the button says it all
     makeBtn.textContent = t('makeGroups');
     renderTools();
   }
@@ -1236,12 +1282,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
     for (let i = 0; i < longest; i++) rows.push(groups.map(g => (g[i] && byId.get(g[i]) ? byId.get(g[i]).name : '')));
     return '\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n');   // the mark at the start lets Excel read ñ and accents
   }
-  $('saveGroupsBtn').onclick = async () => {
+  saveBtn.onclick = async () => {
     const groups = savedGroups();
-    if (!groups) return;
+    if (!groups || busy) return;
     openSettings(false);
     const file = groupsFileName();
-    const yes = await confirmBox(t('saveGroupsTitle'), t('saveGroupsText', { file }), t('saveGroups'));
+    const yes = await confirmBox(LANG.en('saveGroupsTitle'), LANG.en('saveGroupsText', { file }), LANG.en('saveGroups'));
     if (!yes) return;
     const blob = new Blob([groupsCsv(groups)], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
@@ -1253,6 +1299,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     setTimeout(() => { if (hint.textContent === t('groupsSaved')) hint.textContent = before; }, 3500);
   };
 
+  $('gpSound').onchange = () => { state.sound = $('gpSound').checked; save(); };
   $('groupTheme').onchange = () => {
     state.groupTheme = $('groupTheme').value;
     THEMES.paint(state.groupTheme, $('balloons'), reduce);
@@ -1299,33 +1346,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     })(start);
   }
 
-  // ---------- teacher exit: press and hold ----------
-  const tBtn = $('teacherBtn'), tFill = $('teacherFill');
-  const HOLD = 1200;
-  let holdStart = 0, holdRaf = null;
-  function holdBegin(e) {
-    if (e) e.preventDefault();
-    if (holdStart) return;
-    holdStart = performance.now();
-    $('teacherLbl').textContent = $('teacherShort').textContent = t('keepHolding');
-    (function stepHold(now) {
-      const p = Math.min(1, (now - holdStart) / HOLD);
-      tFill.style.transform = `scaleX(${p})`;
-      if (p >= 1) { location.href = 'index.html'; return; }
-      holdRaf = requestAnimationFrame(stepHold);
-    })(holdStart);
-  }
-  function holdEnd() {
-    holdStart = 0; cancelAnimationFrame(holdRaf);
-    tFill.style.transform = 'scaleX(0)';
-    $('teacherLbl').textContent = t('holdTeacher'); $('teacherShort').textContent = t('teacherShort');
-  }
-  tBtn.addEventListener('pointerdown', holdBegin);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => tBtn.addEventListener(ev, holdEnd));
-  tBtn.addEventListener('contextmenu', e => e.preventDefault());
-  tBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); holdBegin(e); } });
-  tBtn.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') holdEnd(); });
-  tBtn.addEventListener('click', e => e.preventDefault());
+  // ---------- back to the teacher screen: one tap ----------
+  $('backBtn').onclick = () => { location.href = 'index.html'; };
 
   // ---------- full screen ----------
   const fsBtn = $('fsBtn');
@@ -1334,16 +1356,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
   if (!document.fullscreenEnabled) fsBtn.hidden = true;
   document.addEventListener('fullscreenchange', () => {
     const on = !!document.fullscreenElement;
-    $('fsLbl').textContent = on ? t('exitFullScreen') : t('fullScreen');
+    $('fsLbl').textContent = on ? LANG.en('exitFullScreen') : LANG.en('fullScreen');
     $('fsIcon').innerHTML = on ? EXIT : ENTER;
-    fsBtn.title = on ? t('exitFullTip') : t('fullTip');
+    fsBtn.title = on ? LANG.en('exitFullTip') : LANG.en('fullTip');
   });
   let fsNoteTimer;
   function fsRefused() {
     if (document.fullscreenElement) return;
-    $('fsLbl').textContent = t('notAvailable');
+    $('fsLbl').textContent = LANG.en('notAvailable');
     clearTimeout(fsNoteTimer);
-    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = t('fullScreen'); }, 2500);
+    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = LANG.en('fullScreen'); }, 2500);
   }
   fsBtn.onclick = () => {
     try {
@@ -1356,7 +1378,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   // ---------- start ----------
   makeBtn.onclick = play;
   document.addEventListener('keydown', e => {
-    if (e.target === tBtn || (e.target.closest && e.target.closest('#setPanel, #setBtn, #confirm'))) return;
+    if (e.target.id === 'backBtn' || (e.target.closest && e.target.closest('#setPanel, #setBtn, #confirm, #undoBar, #saveGroupsBtn'))) return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); play(); }
   });
   // keep the running faces inside the play area when the window changes size
@@ -1371,6 +1393,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   });
 
   function show() {
+    shorts = STORE.shortNames(state.students);
     LANG.set(state.lang);
     THEMES.paint(state.groupTheme || state.theme || 'balloons', $('balloons'), reduce);   // Group Time's own theme
     $('classTitle').textContent = state.className || t('groupTime');
@@ -1379,18 +1402,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $('msgEmpty').hidden = enough;
     $('msgEmptyText').textContent = t('needTwo');
     makeBtn.hidden = !enough;
-    hint.hidden = !enough;
+    hint.hidden = true;
     setBtn.hidden = !enough;
     if (!enough) return;
     renderTools();
     const saved = savedGroups();
     if (saved) {
       renderGroups(saved, false);
-      hint.textContent = t('findTeammates');
+      hint.textContent = t('findTeammates'); hint.hidden = false;
       makeBtn.textContent = t('shuffleAgain');
     } else {
       makeFliers();   // everyone waiting on the playground
-      hint.textContent = t('groupsWaiting');
+      hint.hidden = true;
       makeBtn.textContent = t('makeGroups');
     }
   }

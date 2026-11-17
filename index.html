@@ -77,7 +77,7 @@ header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
 #className {
   font-family: var(--font-display); font-weight: 800; font-size: clamp(22px, 3vw, 32px);
   border: 2px dashed transparent; border-radius: 10px; background: transparent;
-  padding: 0 8px; min-width: 0; width: 100%; max-width: 18em; text-overflow: ellipsis;
+  padding: 0 8px; min-width: 0; width: auto; max-width: 18em; text-overflow: ellipsis;
 }
 #className:hover { border-color: var(--line); }
 #className:focus { border-color: var(--sky); background: var(--panel); outline: none; }
@@ -134,18 +134,13 @@ header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
 .launchers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 /* phones: the two big Start buttons come first, class settings after them */
 @media (max-width: 640px) {
-  .launchers { order: 1; } .launch-note { order: 2; } .classes { order: 3; } .classbar { order: 4; } .roster-panel { order: 5; }
+  .launchers { order: 1; } .classes { order: 3; } .classbar { order: 4; } .roster-panel { order: 5; }
 }
-/* Delete this class is tucked away under Class options so it isn't pressed by mistake */
-.class-opts { position: relative; }
-.class-opts summary { list-style: none; cursor: pointer; color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 8px; border-radius: 10px; }
-.class-opts summary::-webkit-details-marker { display: none; }
-.class-opts summary:hover { background: #F4F8FD; }
-.class-opts[open] summary { color: var(--ink); }
-.class-opts .btn { margin-top: 6px; }
+/* Delete class: a quiet link-style button (it always asks first) so it isn't pressed by mistake */
+.del-class { border: none; background: none; color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
+.del-class:hover { color: #C0392B; background: #FDF1F0; }
 button.go { cursor: pointer; }
 @media (max-width: 860px) { .launchers { grid-template-columns: minmax(0, 1fr); } }
-.launch-note { margin: -8px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
 .roster-foot .note a { color: var(--sky); font-weight: 700; }
 .launch {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: space-between;
@@ -156,18 +151,18 @@ button.go { cursor: pointer; }
 .launch p { margin: 0; color: var(--muted); line-height: 1.5; max-width: 52ch; }
 .go {
   justify-self: start;
-  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-  font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 3vw, 28px);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--font-display); font-weight: 900; font-size: 20px;
   background: var(--sun); color: var(--ink); border: none; border-radius: 999px; text-decoration: none;
-  padding: 16px 34px; box-shadow: 0 6px 0 var(--sun-deep); white-space: nowrap;
+  padding: 11px 24px; box-shadow: 0 5px 0 var(--sun-deep); white-space: nowrap;
   transition: transform .08s ease, box-shadow .08s ease;
 }
-.go svg { width: 30px; height: 30px; }
+.go svg { width: 24px; height: 24px; }
 .go:hover { filter: brightness(1.04); }
 .go:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--sun-deep); }
 .go[aria-disabled="true"] { opacity: .5; pointer-events: none; }
 .groups-panel { background: linear-gradient(120deg, #DDF6EA, #E3F0FF 55%, #EDE6FF); border-color: #B9E3CF; }
-.go-groups { background: var(--leaf); color: #fff; box-shadow: 0 6px 0 #17804F; }
+.go-groups { background: var(--leaf); color: #fff; box-shadow: 0 5px 0 #17804F; }
 .go-groups:active { box-shadow: 0 2px 0 #17804F; }
 .toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
 .toggle input { width: 22px; height: 22px; accent-color: var(--leaf); flex: none; }
@@ -178,7 +173,6 @@ button.go { cursor: pointer; }
 .add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .add-row .or { color: var(--muted); font-weight: 700; font-size: 14px; }
 .add-name { display: flex; gap: 8px; flex: 1 1 320px; min-width: 0; }
-.add-hint { margin: 8px 0 14px; font-size: 14px; color: var(--muted); }
 .add-name input { flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; background: #F8FBFF; }
 .add-name input:focus { border-color: var(--sky); outline: none; background: var(--panel); }
 
@@ -193,21 +187,23 @@ button.go { cursor: pointer; }
 .card .pic label.swap {
   position: absolute; inset: auto 6px 6px auto; width: 30px; height: 30px; border-radius: 9px;
   background: rgba(255,255,255,.92); display: grid; place-items: center; cursor: pointer;
-  opacity: 0; transition: opacity .15s ease; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  opacity: .75; transition: opacity .15s ease; box-shadow: 0 1px 4px rgba(0,0,0,.18);
 }
 .card .pic label.swap svg { width: 16px; height: 16px; }
 .card:hover .pic label.swap, .card .pic label.swap:focus-within, .card.nophoto .pic label.swap { opacity: 1; }
 .card .pic input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.card input.nm {
+.card .nm {
   width: 100%; border: 2px solid transparent; border-radius: 8px; padding: 2px 4px; font-weight: 700;
   text-align: center; background: transparent; font-size: 15px;
+  font-family: inherit; color: inherit; line-height: 1.25; resize: none; overflow: hidden; display: block;
+  field-sizing: content; min-height: calc(1.25em + 8px); overflow-wrap: anywhere;
 }
-.card input.nm:hover { border-color: var(--line); }
-.card input.nm:focus { border-color: var(--sky); outline: none; }
+.card .nm:hover { border-color: var(--line); }
+.card .nm:focus { border-color: var(--sky); outline: none; }
 .card .rm {
   position: absolute; top: -9px; right: -9px; width: 28px; height: 28px; border-radius: 50%;
   border: 2px solid var(--line); background: var(--panel); display: grid; place-items: center;
-  opacity: 0; transition: opacity .15s ease; padding: 0;
+  opacity: .7; transition: opacity .15s ease; padding: 0;
 }
 .card .rm svg { width: 14px; height: 14px; }
 .card:hover .rm, .card .rm:focus-visible { opacity: 1; }
@@ -223,7 +219,7 @@ button.go { cursor: pointer; }
 .dup-warn p { margin: 0; }
 .dup-warn p + p { margin-top: 4px; color: var(--muted); font-size: 14px; }
 .card.dup { border-color: #F0A93B; box-shadow: 0 0 0 3px #FFE2AE; }
-.card.dup input.nm { background: #FFF4DE; }
+.card.dup .nm { background: #FFF4DE; }
 .card .dup-note { font-size: 13px; font-weight: 700; color: #A3610A; text-align: center; margin-top: -4px; line-height: 1.2; }
 
 .initials {
@@ -283,6 +279,25 @@ button.go { cursor: pointer; }
   background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-weight: 600;
   max-width: calc(100% - 32px); text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.2);
 }
+
+/* Small laptop screens (like a 1366x768 laptop with the browser's bars): everything a bit smaller,
+   and each Start card puts its button beside the text, so the student list shows without scrolling. */
+@media (max-height: 760px) and (min-width: 641px) {
+  .app { padding-block: 12px 28px; gap: 14px; }
+  .logo { width: 40px; height: 40px; }
+  #className { font-size: 24px; }
+  .btn { padding: 6px 11px; font-size: 15px; border-radius: 10px; }
+  .btn svg { width: 16px; height: 16px; }
+  .panel { padding: 16px; border-radius: 18px; }
+  .classbar { padding: 7px 10px; }
+  .launchers { gap: 14px; }
+  .launch { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+  .launch h2 { font-size: 21px; margin-bottom: 2px; }
+  .launch p { font-size: 14px; line-height: 1.4; }
+  .go { font-size: 18px; padding: 9px 18px; gap: 8px; box-shadow: 0 4px 0 var(--sun-deep); align-self: center; }
+  .go svg { width: 22px; height: 22px; }
+  .go-groups { box-shadow: 0 4px 0 #17804F; }
+}
 </style>
 </head>
 <body>
@@ -326,7 +341,6 @@ button.go { cursor: pointer; }
     <label class="cb-item" for="optLang" title="Language of Spin Time and Group Time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg> Kids' language
       <select id="optLang"></select>
     </label>
-    <label class="cb-item toggle"><input type="checkbox" id="optSound" checked> <span data-t="sounds">Sounds</span></label>
     <span class="cb-spacer"></span>
     <button class="btn" id="exportBtn" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
@@ -337,10 +351,7 @@ button.go { cursor: pointer; }
       <span data-t="openBackup">Open backup</span>
     </label>
     <input type="file" id="importInput" accept=".json,application/json" hidden>
-    <details class="class-opts">
-      <summary>Class options</summary>
-      <button class="btn danger" id="deleteClassBtn" type="button" data-t="deleteClass">Delete this class</button>
-    </details>
+    <button class="del-class" id="deleteClassBtn" type="button">Delete class…</button>
   </section>
 
   <!-- The two children's screens. Their own settings (theme, turns, groups) are on those screens. -->
@@ -348,7 +359,7 @@ button.go { cursor: pointer; }
     <section class="panel launch" aria-label="Spin Time">
       <div>
         <h2>Spin Time</h2>
-        <p>Pick who recites next with the name wheel. Theme and turns are set on that screen.</p>
+        <p>Pick who recites next with the name wheel.</p>
       </div>
       <button class="go" id="goBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3 5.3 18.7"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>
@@ -358,7 +369,7 @@ button.go { cursor: pointer; }
     <section class="panel launch groups-panel" aria-label="Group Time">
       <div>
         <h2>Group Time</h2>
-        <p>Mix the class into random groups. Number of groups, names, show and theme are set on that screen.</p>
+        <p>Mix the class into random groups.</p>
       </div>
       <button class="go go-groups" id="goGroups" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="8" r="3"/><path d="M2.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5M11 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5"/></svg>
@@ -366,7 +377,6 @@ button.go { cursor: pointer; }
       </button>
     </section>
   </div>
-  <p class="launch-note">To come back here from either screen, press and hold the Teacher button in its corner.</p>
 
   <section class="panel roster-panel" aria-label="Class list">
     <div class="roster-head">
@@ -381,15 +391,14 @@ button.go { cursor: pointer; }
       <input type="file" id="photoInput" accept="image/*" multiple hidden>
       <span class="or">or</span>
       <form class="add-name" id="addNameForm">
-        <input id="newName" data-t-placeholder="namePlaceholder" data-t-aria="studentName" placeholder="Type a name and press Add (use commas for several)" aria-label="Student name" maxlength="400" autocomplete="off">
+        <input id="newName" data-t-placeholder="namePlaceholder" data-t-aria="studentName" placeholder="Type or paste names, then press Add (commas between names)" aria-label="Student name" maxlength="4000" autocomplete="off">
         <button class="btn" type="submit" data-t="add">Add</button>
       </form>
     </div>
-    <p class="add-hint">Photos up to 20 MB each. They are made smaller automatically, so phone photos are fine.</p>
     <div class="dup-warn" id="dupWarn" role="status" hidden></div>
     <div id="roster"></div>
     <div class="roster-foot">
-      <p class="note">Students are saved on this device automatically. They are never uploaded. <a href="help.html">How to use</a> · <a href="privacy.html">About &amp; privacy</a></p>
+      <p class="note">Students are saved on this device automatically. They are never uploaded. <a href="privacy.html">About &amp; privacy</a></p>
       <button class="btn danger" id="clearBtn" type="button" data-t="removeAll">Remove all students</button>
     </div>
   </section>
@@ -404,6 +413,7 @@ button.go { cursor: pointer; }
     <input class="cf-input" id="cfInput" type="text" maxlength="40" autocomplete="off" hidden>
     <div class="cf-actions">
       <button class="btn" id="cfCancel" type="button" data-t="cancel">Cancel</button>
+      <button class="btn" id="cfAlt" type="button" hidden></button>
       <button class="btn" id="cfOk" type="button"></button>
     </div>
   </div>
@@ -417,7 +427,9 @@ button.go { cursor: pointer; }
 (() => {
   const MAX_PHOTO = 20 * 1024 * 1024; // bigger photos can freeze older school computers
   const COLORS = ['#2F7BEA', '#E8467C', '#23A86A', '#7558F0', '#F08A24', '#0EA5B7', '#D9478F', '#5E7CE2'];
-  const SAMPLE = ['Ava', 'Liam', 'Sofia', 'Noah', 'Mia', 'Elijah', 'Isabella', 'Lucas', 'Amara', 'Mateo', 'Zoe', 'Kai'];
+  // full names with middle initials, like school lists; the two Marias show how children's screens tell them apart
+  const SAMPLE = ['Juan P. Dela Cruz', 'Maria C. Santos', 'Jose M. Reyes', 'Ana L. Garcia', 'Miguel A. Bautista', 'Sofia R. Mendoza',
+                  'Gabriel T. Ramos', 'Isabella G. Villanueva', 'Paolo S. Aquino', 'Andrea D. Torres', 'Lucas B. Fernandez', 'Maria V. Lim'];
 
   const t = LANG.t;
   let state = STORE.blankClass();   // the class being edited
@@ -426,7 +438,7 @@ button.go { cursor: pointer; }
   const $ = id => document.getElementById(id);
   const els = {
     className: $('className'), roster: $('roster'),
-    optSound: $('optSound'), toast: $('toast'), dropzone: $('dropzone'),
+    toast: $('toast'), dropzone: $('dropzone'),
     clearBtn: $('clearBtn'), rosterTitle: $('rosterTitle'), goBtn: $('goBtn')
   };
 
@@ -494,9 +506,11 @@ button.go { cursor: pointer; }
   // Confirmation pop-up. Resolves true if the teacher confirms, false if they cancel,
   // press Esc or click outside. For risky actions Cancel has the focus, so Enter is safe.
   // With `input`, it shows a text box and resolves the typed text (or null if cancelled).
-  function confirmBox({ title, text, ok, danger = false, student = null, input = null }) {
+  // alt: an optional third choice; picking it answers 'alt'
+  function confirmBox({ title, text, ok, danger = false, student = null, input = null, alt = null }) {
     return new Promise(resolve => {
-      const box = $('confirm'), okBtn = $('cfOk'), cancelBtn = $('cfCancel'), pic = $('cfPic'), field = $('cfInput');
+      const box = $('confirm'), okBtn = $('cfOk'), cancelBtn = $('cfCancel'), pic = $('cfPic'), field = $('cfInput'), altBtn = $('cfAlt');
+      altBtn.hidden = !alt; if (alt) altBtn.textContent = alt;
       $('cfTitle').textContent = title;
       $('cfText').textContent = text;
       okBtn.textContent = ok;
@@ -508,7 +522,7 @@ button.go { cursor: pointer; }
       const before = document.activeElement;
       box.hidden = false;
       if (input) { field.focus(); field.select(); } else (danger ? cancelBtn : okBtn).focus();
-      const stops = input ? [field, cancelBtn, okBtn] : [cancelBtn, okBtn];
+      const stops = input ? [field, cancelBtn, okBtn] : alt ? [cancelBtn, altBtn, okBtn] : [cancelBtn, okBtn];
       const onKey = e => {
         if (e.key === 'Escape') { e.preventDefault(); done(false); }
         else if (e.key === 'Enter' && input && document.activeElement === field) { e.preventDefault(); done(true); }
@@ -526,13 +540,14 @@ button.go { cursor: pointer; }
         }
         box.hidden = true;
         document.removeEventListener('keydown', onKey, true);
-        okBtn.onclick = cancelBtn.onclick = box.onclick = null;
+        okBtn.onclick = cancelBtn.onclick = altBtn.onclick = box.onclick = null;
         if (before && before.isConnected) before.focus();
         resolve(answer);
       }
       document.addEventListener('keydown', onKey, true);
       okBtn.onclick = () => done(true);
       cancelBtn.onclick = () => done(false);
+      altBtn.onclick = () => done('alt');
       box.onclick = e => { if (e.target === box) done(false); };
     });
   }
@@ -656,8 +671,7 @@ button.go { cursor: pointer; }
   // ---------- rendering ----------
   function render() {
     $('optLang').value = state.lang || 'en';
-    els.className.value = state.className;
-    els.optSound.checked = state.sound;
+    els.className.value = state.className; fitClassName();
     document.title = (state.className ? state.className + ' · ' : '') + 'Class Name Picker';
     renderClassTabs();
     renderRoster();
@@ -719,11 +733,16 @@ button.go { cursor: pointer; }
       };
       swap.append(fi); pic.append(swap);
 
-      const nm = document.createElement('input');
-      nm.className = 'nm'; nm.value = s.name; nm.maxLength = 40;
+      // a textarea so long names wrap onto a second line instead of being cut off
+      const nm = document.createElement('textarea');
+      nm.className = 'nm'; nm.value = s.name; nm.maxLength = 40; nm.rows = 1; nm.spellcheck = false;
+      const fit = () => { if (CSS.supports('field-sizing', 'content')) return; nm.style.height = 'auto'; nm.style.height = nm.scrollHeight + 4 + 'px'; };
+      requestAnimationFrame(fit);
       nm.setAttribute('aria-label', t('nameFor', { name: s.name || t('thisStudent') }));
       // an empty box is never saved: the old name stays until a new one is typed
       nm.oninput = () => {
+        if (/[\r\n]/.test(nm.value)) nm.value = nm.value.replace(/[\r\n]+/g, ' ');   // pasted line breaks
+        fit();
         if (!nm.value.trim()) return;
         s.name = nm.value; save(); updateDupes();
         if (!s.photo) { const a = pic.querySelector('.initials'); a.textContent = initials(s.name); a.style.background = colorFor(s.name || '?'); }
@@ -734,7 +753,7 @@ button.go { cursor: pointer; }
         nm.setAttribute('aria-label', t('nameFor', { name: s.name }));
         rm.title = t('remove', { name: s.name }); rm.setAttribute('aria-label', rm.title);
       };
-      nm.onkeydown = e => { if (e.key === 'Enter') nm.blur(); };
+      nm.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); nm.blur(); } };
 
       const rm = document.createElement('button');
       rm.className = 'rm'; rm.type = 'button'; rm.title = t('remove', { name: s.name });
@@ -778,7 +797,7 @@ button.go { cursor: pointer; }
       let note = card.querySelector('.dup-note');
       if (isDup && !note) {
         note = document.createElement('div'); note.className = 'dup-note'; note.textContent = t('dupNote');
-        card.querySelector('input.nm').after(note);
+        card.querySelector('.nm').after(note);
       } else if (!isDup && note) note.remove();
     });
 
@@ -797,11 +816,12 @@ button.go { cursor: pointer; }
   function escapeHtml(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   // ---------- events ----------
-  els.className.oninput = () => { state.className = els.className.value; document.title = (state.className ? state.className + ' · ' : '') + 'Class Name Picker'; save(); };
+  // the name box is only as wide as the name, so the pencil sits right next to it
+  function fitClassName() { els.className.size = Math.max(6, Math.min(40, els.className.value.length + 1)); }
+  els.className.oninput = () => { fitClassName(); state.className = els.className.value; document.title = (state.className ? state.className + ' · ' : '') + 'Class Name Picker'; save(); };
   els.className.onkeydown = e => { if (e.key === 'Enter') els.className.blur(); };
   $('renameBtn').onclick = () => { els.className.focus(); els.className.select(); };
 
-  els.optSound.onchange = () => { state.sound = els.optSound.checked; save(); };
 
   // Language of the children's screens (Spin Time and Group Time); this screen stays in English.
   for (const l of LANG.list) {
@@ -825,6 +845,34 @@ button.go { cursor: pointer; }
   for (const id of ['addPhotosBtn', 'importBtn']) {
     $(id).onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $(id).click(); } };
   }
+
+  // Pasting a list from Excel, Word or the school form: one child per line.
+  // "DELA CRUZ, JUAN P." becomes "Juan P. Dela Cruz"; numbers in their own column are dropped.
+  const SMALL = /^(de|del|dela|delos|los|las|la|van|von|y)$/i, ROMAN = /^(ii|iii|iv|v|vi)$/i;
+  const tidyCase = n => n === n.toUpperCase() && /[A-ZÑ]/.test(n)
+    ? n.toLowerCase().split(' ').map((w, i) => ROMAN.test(w) ? w.toUpperCase() : (i && SMALL.test(w) && w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w.replace(/(^|[-'.])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()))).join(' ')
+    : n;
+  function lineToName(line) {
+    let n = line.split('\t').map(c => c.trim()).filter(c => c && !/^\d+[.)]?$/.test(c)).join(' ');
+    n = n.replace(/^\d+[.)]\s+/, '').replace(/\s+/g, ' ').trim();
+    const parts = n.split(',');
+    if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {   // Last, First (Jr. / III stays at the end)
+      const m = parts[1].trim().match(/^(.*?)\s+(jr\.?|sr\.?|ii|iii|iv|v)$/i);
+      n = m ? `${m[1]} ${parts[0].trim()} ${m[2]}` : parts[1].trim() + ' ' + parts[0].trim();
+    }
+    else n = n.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+    return tidyCase(n);
+  }
+  $('newName').addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!/[\r\n\t]/.test(text)) return;   // a single name: paste as usual
+    e.preventDefault();
+    const names = text.split(/\r?\n|\r/).map(lineToName).filter(Boolean);
+    const inp = e.target, before = inp.value.slice(0, inp.selectionStart).replace(/[,\s]*$/, ''), after = inp.value.slice(inp.selectionEnd);
+    inp.value = [before, names.join(', '), after.replace(/^[,\s]*/, '')].filter(Boolean).join(', ');
+    inp.focus();
+    toast(t('pastedList', { n: names.length }), 4000);
+  });
 
   $('addNameForm').onsubmit = async e => {
     e.preventDefault();
@@ -854,17 +902,30 @@ button.go { cursor: pointer; }
 
   // Backup
   // keeps letters like ñ and é (same rule as the Group Time file name)
-  const backupFileName = () => ((state.className || '').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim().replace(/\s+/g, '-') || 'class') + '-backup.json';
+  // One file holds every class on this device, so nothing is left out by mistake.
+  const backupFileName = () => {
+    const d = new Date(), pad = n => String(n).padStart(2, '0');
+    return `class-name-picker-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+  };
+  async function allClasses() {
+    const out = [];
+    for (const c of meta.classes) {
+      const cls = c.id === state.id ? state : await STORE.getClass(c.id);
+      if (cls) { const { id, ...rest } = cls; out.push(rest); }
+    }
+    return out;
+  }
   $('exportBtn').onclick = async () => {
+    await saveNow();   // even if this device is full, the backup file still gets everything
+    const classes = await allClasses();
+    const n = classes.reduce((a, c) => a + (c.students || []).length, 0);
     const yes = await confirmBox({
       title: t('saveTitle'),
-      text: t('saveText', { file: backupFileName(), n: state.students.length }),
+      text: t('saveText', { file: backupFileName(), n, c: classes.length }),
       ok: t('saveBackup')
     });
     if (!yes) return;
-    await saveNow();   // even if this device is full, the backup file still gets everything
-    const { id, ...cls } = state;
-    const blob = new Blob([JSON.stringify({ app: 'class-name-picker', version: 1, ...cls })], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'class-name-picker', version: 2, classes })], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = backupFileName();
@@ -902,22 +963,60 @@ button.go { cursor: pointer; }
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
     let got;
-    try { got = readBackup(JSON.parse(await f.text())); } catch (err) { toast(t('notBackup')); return; }
-    // a backup comes in as its own class; an empty class is filled instead of adding another
-    const asNew = state.students.length > 0;
-    const before = state;
-    if (asNew) {
-      if (!(await saveNow())) return;
-      state = STORE.blankClass();
-      meta.classes.push({ id: state.id, name: '', count: 0 });
+    try {
+      const data = JSON.parse(await f.text());
+      // new backups hold every class; older ones hold just one
+      got = (data && Array.isArray(data.classes) ? data.classes : [data]).map(readBackup);
+      if (!got.length) throw new Error('empty');
+    } catch (err) { toast(t('notBackup')); return; }
+    if (!(await saveNow())) return;
+
+    // the same class already here? ask once whether to replace it or keep both
+    const key = n => (n || '').trim().toLowerCase();
+    const here = new Map(meta.classes.map(c => [key(c.name), c.id]));
+    const same = got.filter(g => here.has(key(g.className)));
+    let replace = false;
+    if (same.length) {
+      const names = same.map(g => g.className).join(', ');
+      const ans = await confirmBox({
+        title: t('alreadyHereTitle', { n: same.length }),
+        text: t('alreadyHereText', { names }),
+        ok: t('replaceBtn'), alt: t('keepBothBtn')
+      });
+      if (!ans) return;
+      replace = ans === true;
     }
-    Object.assign(state, got, { groups: null, groupLabels: null, groupLabelIdx: null });
-    if (!(await saveNow())) {
-      if (asNew) { meta.classes = meta.classes.filter(c => c.id !== state.id); state = before; meta.current = before.id; }
-      render(); return;
+
+    let added = 0, replaced = 0, first = null;
+    for (const g of got) {
+      let target;
+      const oldId = replace ? here.get(key(g.className)) : null;
+      if (oldId) {
+        target = oldId === state.id ? state : (await STORE.getClass(oldId)) || STORE.blankClass();
+        target.id = oldId; replaced++;
+      } else if (!state.students.length && !first) {
+        target = state;   // an empty class on screen is filled instead of adding another
+        added++;
+      } else {
+        target = STORE.blankClass();
+        meta.classes.push({ id: target.id, name: '', count: 0 });
+        added++;
+      }
+      Object.assign(target, g, { groups: null, groupLabels: null, groupLabelIdx: null });
+      const entry = meta.classes.find(c => c.id === target.id);
+      if (entry) { entry.name = target.className; entry.count = target.students.length; }
+      if (target !== state) {
+        try { await STORE.putClass(target); } catch (err) { toast(t('storageFull'), 7000, true); render(); return; }
+      }
+      if (!first) first = target;
     }
+    if (first && first !== state) { state = first; }
+    meta.current = state.id;
+    if (!(await saveNow())) { render(); return; }
     render();
-    toast(t(asNew ? 'backupAdded' : 'backupOpened', { cls: state.className, n: state.students.length }));
+    toast(got.length === 1
+      ? t(replaced ? 'backupReplaced' : 'backupOpened', { cls: got[0].className, n: got[0].students.length })
+      : t('backupMany', { n: got.length }), 4000);
   };
 
   // Drag and drop photos anywhere

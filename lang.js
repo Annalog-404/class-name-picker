@@ -8,22 +8,21 @@ window.LANG = (() => {
       _name: 'English',
       // children's screen
       spinTime: 'Spin Time',
-      holdTeacher: 'Hold for Teacher',
-      keepHolding: 'Keep holding...',
-      teacherTip: 'Press and hold to go back to Teacher setup',
+      back: 'Back',
+      backTip: 'Back to Teacher setup',
       fullScreen: 'Full screen',
       exitFullScreen: 'Exit full screen',
       notAvailable: 'Not available here',
       fullTip: 'Fill the whole screen with the wheel (press Esc to leave)',
       exitFullTip: 'Go back to the normal window (or press Esc)',
       spin: 'SPIN',
-      tapToSpin: 'Tap the wheel to spin!',
+      tapToSpin: 'Who will be called?',
       friendsLeft: v => v.n === 1 ? '1 friend left' : `${v.n} friends left`,
       doneTitle: 'Everyone had a turn!',
       doneText: 'Great job, everybody. Start again to put all the names back on the wheel.',
       playAgain: 'Play again',
       noNamesTitle: 'No names yet',
-      noNamesText: 'The teacher needs to add the class first. Press and hold the Teacher button at the top.',
+      noNamesText: 'The teacher needs to add the class first. Press Back at the top.',
       yourTurn: "It's your turn!",
       yay: 'Yay!',
       alreadyCalled: 'Already called',
@@ -38,7 +37,9 @@ window.LANG = (() => {
       settings: 'Settings',
       themeLabel: 'Theme',
       noRepeat: 'Everyone gets a turn before anyone repeats',
-      newRound: 'Start a new round',
+      newRound: 'New round',
+      roundStarted: 'New round! Everyone is back on the wheel.',
+      undo: 'Undo',
       theme_balloons: 'Balloons',
       theme_math: 'Math',
       theme_reading: 'Reading & Writing',
@@ -55,6 +56,7 @@ window.LANG = (() => {
       anim_trains: 'Trains',
       groupsLabel: 'Groups',
       saveGroups: 'Save these groups',
+      groupsShuffled: 'New groups made.',
       saveGroupsTitle: 'Save these groups?',
       saveGroupsText: 'A file called {file} will be saved to your Downloads folder. It opens in Excel or Google Sheets.',
       groupsSaved: 'Groups saved to your Downloads folder.',
@@ -72,11 +74,7 @@ window.LANG = (() => {
       findTeammates: 'Find your teammates!',
       groupsWaiting: 'Press the button to find your teammates!',
       needTwo: 'Add at least 2 students to make groups.',
-      newRoundTitle: 'Start a new round?',
-      newRoundText: 'All the names go back on the wheel and the Already called list is cleared.',
-      newRoundOk: 'Yes, start again',
       saveFailed: "Couldn't save on this device. Teacher: save a backup soon.",
-      teacherShort: 'Teacher',
       quickSpin: 'Quick spin',
       // teacher screen (English only)
       teacherSetup: 'Teacher setup',
@@ -89,7 +87,7 @@ window.LANG = (() => {
       sounds: 'Sounds',
       students: 'Students',
       studentsCount: 'Students ({n})',
-      namePlaceholder: 'Type a name and press Add (use commas for several)',
+      namePlaceholder: 'Type or paste names, then press Add (commas between names)',
       studentName: 'Student name',
       add: 'Add',
       saveBackup: 'Save backup',
@@ -104,7 +102,14 @@ window.LANG = (() => {
       removeAllText: 'This deletes every name and photo in {cls} from this device. It cannot be undone. Save a backup first if you might need them again.',
       removeAllBtn: 'Remove all',
       saveTitle: 'Save a backup?',
-      saveText: 'A file called {file} will be saved to your Downloads folder, with all {n} students and their photos.',
+      saveText: v => `A file called ${v.file} will be saved to your Downloads folder, with ${v.c === 1 ? 'your class' : 'all ' + v.c + ' classes'} (${v.n} students and their photos).`,
+      alreadyHereTitle: v => v.n === 1 ? 'This class is already here' : 'These classes are already here',
+      alreadyHereText: 'The backup has {names}, and this device already has a class with that name. Replace it with the backup, or keep both?',
+      replaceBtn: 'Replace',
+      pastedList: v => `${v.n} names pasted. Check them, then press Add.`,
+      keepBothBtn: 'Keep both',
+      backupReplaced: 'Replaced {cls} with the backup ({n} students).',
+      backupMany: 'Opened {n} classes from the backup.',
       yourClasses: 'Your classes',
       newClass: 'New class',
       newClassTitle: 'New class',
@@ -122,7 +127,7 @@ window.LANG = (() => {
       backupAdded: 'Added {cls} as a new class with {n} students.',
       emptyTitle: 'No students yet',
       emptyText1: 'Click <b>Add student photos</b> and pick all the photos at once, or drag them onto this page. Name each photo file with the student\'s name, like <code>Maria.jpg</code>, and the names fill in by themselves.',
-      emptyText2: 'No photos? Type names in the box above.',
+      emptyText2: 'No photos? Type names in the box above, or paste your class list from Excel or Word.',
       trySample: 'Try it with sample names',
       changePhoto: 'Change photo',
       addPhoto: 'Add photo',
@@ -161,22 +166,21 @@ window.LANG = (() => {
     fil: {
       _name: 'Filipino (Tagalog)',
       spinTime: 'Oras ng Pag-ikot',
-      holdTeacher: 'Hawakan para sa Guro',
-      keepHolding: 'Hawakan pa...',
-      teacherTip: 'Pindutin nang matagal para bumalik sa pahina ng guro',
+      back: 'Bumalik',
+      backTip: 'Bumalik sa pahina ng guro',
       fullScreen: 'Buong screen',
       exitFullScreen: 'Lumabas sa buong screen',
       notAvailable: 'Hindi puwede rito',
       fullTip: 'Punuin ng gulong ang buong screen (pindutin ang Esc para lumabas)',
       exitFullTip: 'Bumalik sa karaniwang window (o pindutin ang Esc)',
       spin: 'IKOT',
-      tapToSpin: 'Pindutin ang gulong para umikot!',
+      tapToSpin: 'Sino kaya ang tatawagin?',
       friendsLeft: v => `${v.n} kaibigan pa ang natitira`,
       doneTitle: 'Natawag na ang lahat!',
       doneText: 'Magaling, lahat! Magsimula ulit para ibalik ang lahat ng pangalan sa gulong.',
       playAgain: 'Maglaro ulit',
       noNamesTitle: 'Wala pang pangalan',
-      noNamesText: 'Kailangan munang idagdag ng guro ang klase. Pindutin nang matagal ang button ng Guro sa itaas.',
+      noNamesText: 'Kailangan munang idagdag ng guro ang klase. Pindutin ang Bumalik sa itaas.',
       yourTurn: 'Ikaw na!',
       yay: 'Yehey!',
       alreadyCalled: 'Natawag na',
@@ -190,7 +194,9 @@ window.LANG = (() => {
       settings: 'Mga setting',
       themeLabel: 'Tema',
       noRepeat: 'Matatawag muna ang lahat bago maulit ang sinuman',
-      newRound: 'Magsimula ng bagong round',
+      newRound: 'Bagong round',
+      roundStarted: 'Bagong round! Balik sa gulong ang lahat.',
+      undo: 'Ibalik',
       theme_balloons: 'Lobo',
       theme_math: 'Matematika',
       theme_reading: 'Pagbasa at Pagsulat',
@@ -225,33 +231,28 @@ window.LANG = (() => {
       findTeammates: 'Hanapin ang iyong mga kapangkat!',
       groupsWaiting: 'Pindutin ang button para makilala ang iyong mga kapangkat!',
       needTwo: 'Kailangan ng hindi bababa sa 2 mag-aaral para bumuo ng pangkat.',
-      newRoundTitle: 'Magsimula ng bagong round?',
-      newRoundText: 'Babalik sa gulong ang lahat ng pangalan at mabubura ang listahan ng Natawag na.',
-      newRoundOk: 'Oo, magsimula ulit',
       saveFailed: 'Hindi ma-save sa device na ito. Guro: mag-save ng backup agad.',
-      teacherShort: 'Guro',
       quickSpin: 'Mabilis na ikot'
     },
 
     ceb: {
       _name: 'Bisaya (Cebuano)',
       spinTime: 'Oras sa Pagtuyok',
-      holdTeacher: 'Kupti para sa Magtutudlo',
-      keepHolding: 'Kupti pa...',
-      teacherTip: 'Pindota og dugay aron mobalik sa panid sa magtutudlo',
+      back: 'Balik',
+      backTip: 'Balik sa panid sa magtutudlo',
       fullScreen: 'Tibuok screen',
       exitFullScreen: 'Gawas sa tibuok screen',
       notAvailable: 'Dili mahimo diri',
       fullTip: 'Pun-a sa ligid ang tibuok screen (pindota ang Esc aron mogawas)',
       exitFullTip: 'Balik sa naandan nga window (o pindota ang Esc)',
       spin: 'TUYOK',
-      tapToSpin: 'Pindota ang ligid aron motuyok!',
+      tapToSpin: 'Kinsa kaha ang tawgon?',
       friendsLeft: v => `${v.n} pa ka higala ang nahibilin`,
       doneTitle: 'Natawag na ang tanan!',
       doneText: 'Maayo kaayo, tanan! Sugdi pag-usab aron mabalik ang tanang ngalan sa ligid.',
       playAgain: 'Duwa pag-usab',
       noNamesTitle: 'Wala pay ngalan',
-      noNamesText: 'Kinahanglan una idugang sa magtutudlo ang klase. Pindota og dugay ang button sa Magtutudlo sa ibabaw.',
+      noNamesText: 'Kinahanglan una idugang sa magtutudlo ang klase. Pindota ang Balik sa ibabaw.',
       yourTurn: 'Ikaw na!',
       yay: 'Yehey!',
       alreadyCalled: 'Natawag na',
@@ -265,7 +266,9 @@ window.LANG = (() => {
       settings: 'Mga setting',
       themeLabel: 'Tema',
       noRepeat: 'Matawag una ang tanan sa dili pa mausab ang bisan kinsa',
-      newRound: 'Sugdi ang bag-ong round',
+      newRound: 'Bag-ong round',
+      roundStarted: 'Bag-ong round! Balik sa ligid ang tanan.',
+      undo: 'Ibalik',
       theme_balloons: 'Lobo',
       theme_math: 'Matematika',
       theme_reading: 'Pagbasa ug Pagsulat',
@@ -300,11 +303,7 @@ window.LANG = (() => {
       findTeammates: 'Pangitaa ang imong mga kauban!',
       groupsWaiting: 'Pindota ang button aron mailhan ang imong mga kauban!',
       needTwo: 'Kinahanglan og labing menos 2 ka estudyante aron makahimo og grupo.',
-      newRoundTitle: 'Sugdan ang bag-ong round?',
-      newRoundText: 'Mobalik sa ligid ang tanang ngalan ug mapapas ang lista sa Natawag na.',
-      newRoundOk: 'Oo, sugdi pag-usab',
       saveFailed: 'Dili ma-save niining device. Magtutudlo: pag-save og backup dayon.',
-      teacherShort: 'Magtutudlo',
       quickSpin: 'Paspas nga tuyok'
     }
   };
@@ -312,20 +311,25 @@ window.LANG = (() => {
   let code = 'en';
 
   // t('key') or t('key', { name: 'Ava' }); falls back to English if a word is missing
-  function t(key, vars = {}) {
-    const val = (LANGS[code] && LANGS[code][key]) ?? LANGS.en[key] ?? key;
+  function t(key, vars = {}, c = code) {
+    const val = (LANGS[c] && LANGS[c][key]) ?? LANGS.en[key] ?? key;
     if (typeof val === 'function') return val(vars);
     return String(val).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
   }
 
+  // English always, for the teacher's own buttons on the children's screens
+  const en = (key, vars = {}) => t(key, vars, 'en');
+
   // Fill in every element marked with data-t (text), data-t-html, data-t-title,
-  // data-t-placeholder or data-t-aria.
+  // data-t-placeholder or data-t-aria. Anything inside a data-en box (the teacher's
+  // buttons and settings) stays in English whatever the children's language is.
   function apply(root = document) {
-    root.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
-    root.querySelectorAll('[data-t-html]').forEach(el => { el.innerHTML = t(el.dataset.tHtml); });
-    root.querySelectorAll('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); });
-    root.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = t(el.dataset.tPlaceholder); });
-    root.querySelectorAll('[data-t-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.tAria)); });
+    const w = (el, key) => (el.closest('[data-en]') ? en : t)(key);
+    root.querySelectorAll('[data-t]').forEach(el => { el.textContent = w(el, el.dataset.t); });
+    root.querySelectorAll('[data-t-html]').forEach(el => { el.innerHTML = w(el, el.dataset.tHtml); });
+    root.querySelectorAll('[data-t-title]').forEach(el => { el.title = w(el, el.dataset.tTitle); });
+    root.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = w(el, el.dataset.tPlaceholder); });
+    root.querySelectorAll('[data-t-aria]').forEach(el => { el.setAttribute('aria-label', w(el, el.dataset.tAria)); });
   }
 
   function set(c) {
@@ -335,7 +339,7 @@ window.LANG = (() => {
   }
 
   return {
-    t, apply, set,
+    t, en, apply, set,
     get code() { return code; },
     list: Object.keys(LANGS).map(k => ({ code: k, name: LANGS[k]._name }))
   };

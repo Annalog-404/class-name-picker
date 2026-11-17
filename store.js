@@ -107,8 +107,43 @@ window.STORE = (() => {
     return { meta: m, cls: c || blankClass() };
   }
 
+  // Names for the children's screens. Teachers save full names; children see the first name only.
+  // When two children share a first name, the first letter of the last name is added ("Lily S."),
+  // or the whole last name if that matches too. "Ma. Clara Santos" shows as "Ma. Clara".
+  const SUFFIX = /^(jr|sr|ii|iii|iv|v)\.?$/i;
+  const PARTICLE = /^(de|del|dela|delos|de\.|la|las|los|san|santa|sta\.?|sto\.?|van|von|da|di|du)$/i;
+  function nameParts(full) {
+    const p = String(full || '').trim().split(/\s+/).filter(Boolean);
+    const firstLen = p.length > 1 && /^m[aª]\.?$/i.test(p[0]) ? 2 : Math.min(1, p.length);
+    const first = p.slice(0, firstLen).join(' ');
+    const rest = p.slice(firstLen).filter(w => !SUFFIX.test(w));
+    if (!rest.length) return { first, last: '' };
+    let i = rest.length - 1;
+    while (i > 0 && PARTICLE.test(rest[i - 1])) i--;   // "Dela Cruz", "De los Santos"
+    return { first, last: rest.slice(i).join(' ') };
+  }
+  function shortNames(students) {
+    const out = new Map(), byFirst = new Map();
+    const key = x => x.toLocaleLowerCase();
+    for (const s of students) {
+      const n = nameParts(s.name);
+      const k = key(n.first);
+      if (!byFirst.has(k)) byFirst.set(k, []);
+      byFirst.get(k).push({ s, n });
+    }
+    for (const same of byFirst.values()) {
+      if (same.length === 1) { out.set(same[0].s.id, same[0].n.first || String(same[0].s.name || '').trim()); continue; }
+      const initial = x => x.n.last ? `${x.n.first} ${x.n.last.charAt(0).toLocaleUpperCase()}.` : x.n.first;
+      const count = new Map();
+      same.forEach(x => count.set(key(initial(x)), (count.get(key(initial(x))) || 0) + 1));
+      same.forEach(x => out.set(x.s.id, count.get(key(initial(x))) === 1 ? initial(x)
+        : (x.n.last ? `${x.n.first} ${x.n.last}` : String(x.s.name || '').trim())));
+    }
+    return out;
+  }
+
   return {
-    meta, getClass, currentClass, blankClass,
+    meta, getClass, currentClass, blankClass, shortNames,
     putClass: c => put('class:' + c.id, c),
     deleteClass: id => remove('class:' + id),
     putMeta: m => put('meta', m)

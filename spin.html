@@ -86,14 +86,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .corner svg { width: 18px; height: 18px; }
 @media (max-width: 520px) { #fsLbl, #setLbl { display: none; } }
 /* phones: icons only, a short Teacher label, so the class name still has room */
-.corner .short { display: none; }
 @media (max-width: 480px) {
   .top { gap: 6px; }
   .title img { display: none; }
   .title h1 { font-size: 20px; }
   .corner { padding: 9px 10px; }
-  .corner .long { display: none; }
-  .corner .short { display: inline; }
 }
 .corner:disabled { opacity: .45; cursor: default; }
 .set-panel {
@@ -111,7 +108,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .sp-btn svg { width: 18px; height: 18px; }
 .sp-btn:hover { background: #F1F6FC; }
-.corner .fill { position: absolute; inset: 0; background: rgba(255,255,255,.75); transform-origin: left; transform: scaleX(0); }
 .corner span.lbl, .corner svg { position: relative; }
 
 .main { flex: 1; min-height: 0; display: flex; gap: 16px; }
@@ -127,7 +123,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: rgba(255,255,255,.82); border-radius: 26px; padding: 14px; min-height: 0;
   box-shadow: 0 8px 0 rgba(29,39,66,.12);
 }
-.called h2 { margin: 0; font-size: 22px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.called h2 { margin: 0; font-size: 22px; white-space: nowrap; font-weight: 900; display: flex; align-items: center; gap: 8px; }
 .called h2 .count { background: var(--leaf); color: #fff; border-radius: 999px; font-size: 15px; padding: 2px 10px; font-variant-numeric: tabular-nums; }
 #calledList { list-style: none; margin: 0; padding: 2px; flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
 #calledList li {
@@ -164,10 +160,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .main { flex-direction: column; gap: 10px; }
   .wheel-wrap { width: min(92vw, calc(100vh - 330px), 760px); }
   @supports (height: 100dvh) { .wheel-wrap { width: min(92vw, calc(100dvh - 330px), 760px); } }
-  .called { width: auto; flex-direction: row; align-items: center; padding: 10px 12px; border-radius: 22px; }
+  .called { width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 12px; border-radius: 22px; }
+  .called .called-tools { order: 3; flex: 1 1 100%; min-width: 0; justify-content: space-between; }
+  #calledList { flex: 1 1 0; min-width: 0; }
   .called h2 { flex-direction: column; font-size: 16px; text-align: center; flex: none; gap: 4px; line-height: 1.1; }
-  #calledList { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 4px; }
-  #calledList li { padding: 4px 12px 4px 4px; }
+  #calledList { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 4px; scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 18px); mask-image: linear-gradient(to right, transparent, #000 18px); }
+  #calledList li { padding: 4px 12px 4px 4px; scroll-snap-align: end; flex: none; }
   #calledList .face { width: 40px; height: 40px; }
   #calledList .nm, .called.compact #calledList .nm { font-size: 18px; }
 }
@@ -209,7 +208,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .now .nm { font-size: clamp(28px, 4vw, 40px); font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; display: inline-block; }
 .now .nm.bump { animation: bump .18s ease-out; }
 @keyframes bump { 40% { transform: scale(1.12); } }
-.left-count { display: inline-block; background: #E6F0FF; color: var(--ink); border-radius: 999px; padding: 2px 14px; font-size: .8em; margin-left: 6px; }
+.wait-count {
+  align-self: flex-start; flex: none; background: #E5F7EE; color: #156B43; border: 2px solid #BFE8D2;
+  border-radius: 999px; padding: 2px 12px; font-size: 16px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
 /* shown only if this device could not save (for the teacher) */
 .save-note {
   position: fixed; left: 50%; transform: translateX(-50%); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 58px);
@@ -253,21 +255,42 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 #confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; width: 100%; height: 100%; }
 
-/* "Start a new round?" check, so one tap can't wipe the round by accident */
-.confirm-back { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(29,39,66,.55); }
-.confirm-card {
-  background: #fff; border-radius: 26px; padding: 24px; width: min(480px, 100%); text-align: center;
-  display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgba(29,39,66,.3);
+/* New round button on the Already called list, and the Undo bar after it */
+.called-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; flex: none; }
+.called-tools:not(:has(> :not([hidden]))) { display: none; }
+.nr-btn {
+  display: inline-flex; align-items: center; gap: 6px; border: 2px solid #D5E1F0; background: #fff;
+  color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 15px; font-weight: 800; white-space: nowrap;
 }
-.confirm-card h3 { margin: 0; font-size: 28px; font-weight: 900; }
-.confirm-card p { margin: 0; color: #4A5577; font-size: 18px; line-height: 1.45; }
-.cf-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.cf-actions button { min-width: 130px; font-size: 18px; }
-.cf-ok { border: none; background: var(--sun); color: var(--ink); border-radius: 12px; padding: 10px 16px; font-weight: 900; box-shadow: 0 4px 0 var(--sun-deep); }
+.nr-btn svg { width: 16px; height: 16px; }
+.nr-btn:hover { background: #F1F6FC; }
+.nr-btn:disabled { opacity: .45; cursor: default; }
+.undo-bar {
+  position: fixed; z-index: 70; left: 50%; transform: translateX(-50%);
+  bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 96px);
+  display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px);
+  background: var(--ink); color: #fff; border-radius: 16px; padding: 10px 12px 10px 18px;
+  font-size: 17px; font-weight: 800; box-shadow: 0 10px 24px rgba(29,39,66,.3);
+}
+.undo-bar button { border: none; background: var(--sun); color: var(--ink); border-radius: 10px; padding: 7px 14px; font-weight: 900; font-size: 16px; }
 
 @media (prefers-reduced-motion: reduce) {
   .now .nm.bump,
   .now.suspense, .balloons span, #hub.pulse, .reveal-photo, .reveal-photo > div, .reveal-card, .pointer.flick { animation: none; }
+}
+
+/* Small laptop screens (like a 1366x768 laptop with the browser's bars): smaller buttons and
+   helper text, so the wheel keeps the room. Projectors and big screens are not affected. */
+@media (max-height: 760px) {
+  .top { min-height: 44px; }
+  .title img { width: 34px; height: 34px; }
+  .title h1 { font-size: 22px; }
+  .corner { padding: 6px 12px; font-size: 15px; }
+  .hint { font-size: 19px; padding: 4px 16px; }
+  .big-btn { font-size: 20px; padding: 9px 24px; box-shadow: 0 4px 0 var(--sun-deep); }
+  .now { padding: 4px 20px 4px 4px; }
+  .now .face { width: 48px; height: 48px; border-width: 3px; }
+  .now .nm { font-size: 28px; }
 }
 </style>
 </head>
@@ -280,19 +303,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <img src="icons/icon-192.png" alt="">
       <h1 id="classTitle">Spin Time</h1>
     </div>
-    <button class="corner" id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
+    <button class="corner" data-en id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
       <span class="lbl" id="setLbl" data-t="settings">Settings</span>
     </button>
-    <button class="corner" id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen with the wheel (press Esc to leave)">
+    <button class="corner" data-en id="fsBtn" type="button" data-t-title="fullTip" title="Fill the whole screen with the wheel (press Esc to leave)">
       <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       <span class="lbl" id="fsLbl" data-t="fullScreen">Full screen</span>
     </button>
-    <button class="corner" id="teacherBtn" type="button" data-t-title="teacherTip" title="Press and hold to go back to Teacher setup">
-      <span class="fill" id="teacherFill"></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-      <span class="lbl long" id="teacherLbl" data-t="holdTeacher">Hold for Teacher</span>
-      <span class="lbl short" id="teacherShort" data-t="teacherShort">Teacher</span>
+    <button class="corner" data-en id="backBtn" type="button" data-t-title="backTip" title="Back to Teacher setup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <span class="lbl" data-t="back">Back</span>
     </button>
   </div>
 
@@ -306,7 +327,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       <canvas id="wheel" aria-label="Name wheel"></canvas>
       <button id="hub" type="button" class="pulse" data-t="spin">SPIN</button>
     </div>
-    <div class="hint" id="hint">Tap the wheel to spin!</div>
+    <div class="hint" id="hint">Who will be called?</div>
     <div class="now" id="now" hidden aria-hidden="true"><span class="face" id="nowFace"></span><span class="nm" id="nowName"></span></div>
 
     <div class="message" id="msgDone" hidden>
@@ -316,12 +337,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
     </div>
     <div class="message" id="msgEmpty" hidden>
       <h2 data-t="noNamesTitle">No names yet</h2>
-      <p data-t="noNamesText">The teacher needs to add the class first. Press and hold the Teacher button at the top.</p>
+      <p data-t="noNamesText">The teacher needs to add the class first. Press Back at the top.</p>
     </div>
   </div>
 
   <aside class="called" id="called" aria-label="Already called" hidden>
     <h2><span data-t="alreadyCalled">Already called</span> <span class="count" id="calledCount">0</span></h2>
+    <div class="called-tools">
+      <div class="wait-count" id="waitCount" hidden></div>
+      <button class="nr-btn" data-en id="newRoundBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg> <span data-t="newRound">New round</span></button>
+    </div>
     <ol id="calledList"></ol>
     <p class="called-empty" id="calledEmpty" data-t="calledEmpty">Names show up here after each spin.</p>
   </aside>
@@ -329,14 +354,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 </div>
 
 <!-- Spin Time's own settings: how it looks and how turns work -->
-<div class="set-panel" id="setPanel" hidden>
+<div class="set-panel" data-en id="setPanel" hidden>
   <label class="sp-row" for="spTheme"><span data-t="themeLabel">Theme</span><select id="spTheme"></select></label>
   <label class="sp-row sp-check"><input type="checkbox" id="spNoRepeat"> <span data-t="noRepeat">Everyone gets a turn before anyone repeats</span></label>
   <label class="sp-row sp-check"><input type="checkbox" id="spQuick"> <span data-t="quickSpin">Quick spin</span></label>
-  <button class="sp-btn" id="spNewRound" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-    <span data-t="newRound">Start a new round</span>
-  </button>
+  <label class="sp-row sp-check"><input type="checkbox" id="spSound"> <span data-t="sounds">Sounds</span></label>
 </div>
 
 <div id="reveal" hidden role="dialog" aria-modal="true" aria-labelledby="revealName">
@@ -348,15 +370,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   </div>
 </div>
 
-<div class="confirm-back" id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
-  <div class="confirm-card">
-    <h3 id="cfTitle" data-t="newRoundTitle">Start a new round?</h3>
-    <p id="cfText" data-t="newRoundText">All the names go back on the wheel and the Already called list is cleared.</p>
-    <div class="cf-actions">
-      <button type="button" class="sp-btn" id="cfCancel" data-t="cancel">Cancel</button>
-      <button type="button" class="cf-ok" id="cfOk" data-t="newRoundOk">Yes, start again</button>
-    </div>
-  </div>
+<!-- after a new round: a few seconds to undo a stray tap -->
+<div class="undo-bar" data-en id="undoBar" hidden role="status">
+  <span data-t="roundStarted">New round! Everyone is back on the wheel.</span>
+  <button type="button" id="undoBtn" data-t="undo">Undo</button>
 </div>
 
 <div class="save-note" id="saveNote" hidden role="status" data-t="saveFailed">Couldn't save on this device. Teacher: save a backup soon.</div>
@@ -381,6 +398,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   // history: ids of the students called this round, in order
   const t = LANG.t;
   let state = { className: 'My Class', students: [], noRepeat: true, sound: true, history: [], lang: 'en', theme: 'balloons' };
+  // children see first names only ("Lily S." when two share one); see STORE.shortNames
+  let shorts = new Map();
+  const shortName = s => (s && (shorts.get(s.id) || s.name)) || t('friend');
   let paintedTheme = null;
   let faceMemo = [];   // how much each face is turned to stand upright (see draw)
   let pool = [];
@@ -414,6 +434,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
 
   function rebuild() {
+    shorts = STORE.shortNames(state.students);
     pool = state.noRepeat ? state.students.filter(s => !s.picked) : state.students.slice();
     if (LANG.code !== state.lang) LANG.set(state.lang);
     const theme = state.spinTheme || state.theme || 'balloons';   // Spin Time's own theme
@@ -431,8 +452,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     hint.hidden = empty || done;
     $('msgEmpty').hidden = !empty;
     $('msgDone').hidden = !done;
+    hint.textContent = t('tapToSpin');
+    // how many are still waiting lives on the Already called panel, not on the question
     const left = pool.length;
-    hint.innerHTML = t('tapToSpin') + (state.noRepeat && left ? ` <span class="left-count">${t('friendsLeft', { n: left })}</span>` : '');
+    $('waitCount').hidden = !state.noRepeat || !left;
+    $('waitCount').textContent = t('friendsLeft', { n: left });
     renderCalled();
     resize();
   }
@@ -444,6 +468,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     const prevCount = list.children.length;
     $('called').hidden = !state.students.length;
     $('calledCount').textContent = called.length;
+    $('newRoundBtn').hidden = !called.length && !state.students.some(s => s.picked);
+    $('newRoundBtn').disabled = spinning;
     $('called').classList.toggle('compact', called.length > 12);
     $('calledEmpty').hidden = called.length > 0;
     list.hidden = !called.length;
@@ -454,8 +480,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
       const num = document.createElement('span'); num.className = 'num'; num.textContent = i + 1;
       const face = document.createElement('span'); face.className = 'face';
       if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; face.append(img); }
-      else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); face.append(d); }
-      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name || t('friend');
+      else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(shortName(s)); face.append(d); }
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = shortName(s);
       li.append(num, face, nm);
       list.append(li);
     });
@@ -506,7 +532,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     const room = 2 * tx * Math.sin(Math.min(seg, Math.PI) / 2);
     const chord = (seg >= Math.PI ? 2 * tx : 2 * tx * Math.sin(seg / 2)) * 0.85;
     ctx.font = font(100);
-    const perPx = pool.map(p => Math.max(1, ctx.measureText(p.name || '').width) / 100); // width per pixel of font size
+    const perPx = pool.map(p => Math.max(1, ctx.measureText(shortName(p)).width) / 100); // width per pixel of font size
     const alongMax = Math.min(r * 0.085, room * 0.62), acrossMax = Math.min(r * 0.1, avail * 0.6);
     const alongFit = w => Math.min(alongMax, avail / w);
     const acrossFit = w => Math.min(acrossMax, chord / w);
@@ -543,7 +569,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
           ctx.fillStyle = colorFor(s.name || '?'); ctx.fillRect(-pr, -pr, pr * 2, pr * 2);
           ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.font = font(pr * 0.9);
-          ctx.fillText(initials(s.name), 0, pr * 0.06);
+          ctx.fillText(initials(shortName(s)), 0, pr * 0.06);
         }
         ctx.restore();
       }
@@ -559,21 +585,21 @@ button { font: inherit; color: inherit; cursor: pointer; }
           ctx.fillStyle = txt; ctx.textBaseline = 'middle'; ctx.font = font(fs);
           if (across) {
             ctx.save(); ctx.translate(tx, 0); ctx.rotate(flip ? -Math.PI / 2 : Math.PI / 2);
-            ctx.textAlign = 'center'; ctx.fillText(s.name || '', 0, 0, maxW);
+            ctx.textAlign = 'center'; ctx.fillText(shortName(s), 0, 0, maxW);
             ctx.restore();
           } else if (flip) {
             ctx.save(); ctx.rotate(Math.PI);
-            ctx.textAlign = 'left'; ctx.fillText(s.name || '', -end, fs * 0.04, maxW);
+            ctx.textAlign = 'left'; ctx.fillText(shortName(s), -end, fs * 0.04, maxW);
             ctx.restore();
           } else {
-            ctx.textAlign = 'right'; ctx.fillText(s.name || '', end, fs * 0.04, maxW);
+            ctx.textAlign = 'right'; ctx.fillText(shortName(s), end, fs * 0.04, maxW);
           }
         }
       }
       ctx.restore();
     }
     if (n === 1) {
-      const nm = pool[0].name || t('friend'), w = r * 1.1;
+      const nm = shortName(pool[0]), w = r * 1.1;
       ctx.font = font(100);
       const fs = Math.max(floorFs, Math.min(r * 0.14, w / (Math.max(1, ctx.measureText(nm).width) / 100)));
       ctx.font = font(fs); ctx.fillStyle = sliceColor(0, 1)[1]; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -642,6 +668,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function spin() {
     if (spinning || !pool.length || !$('reveal').hidden) return;
     spinning = true; hub.disabled = true; hub.classList.remove('pulse');
+    $('newRoundBtn').disabled = true; $('undoBar').hidden = true; undoSnap = null;
     winnerIdx = -1; flashOn = false;
     hint.hidden = true;
     // no settings changes until the winner pop-up is closed: they could change the wheel mid-spin
@@ -711,10 +738,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
     const s = wheel[win];
     for (let k = 0; k < 6; k++) { flashOn = !flashOn; draw(k % 2); await new Promise(r => setTimeout(r, 130)); }
     flashOn = true; draw();
-    if (state.noRepeat) {
-      const real = state.students.find(x => x.id === s.id);
-      if (real) real.picked = true;
-    }
+    // always remember who was called, so turning "Everyone gets a turn" back on never brings them back
+    const real = state.students.find(x => x.id === s.id);
+    if (real) real.picked = true;
     state.history = (state.history || []).concat(s.id);
     save();
     reveal(s);
@@ -724,17 +750,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function showNow(s) {
     const face = $('nowFace'); face.innerHTML = '';
     if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = ''; face.append(img); }
-    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); face.append(d); }
+    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(shortName(s)); face.append(d); }
     const nm = $('nowName');
-    nm.textContent = s.name || t('friend');
+    nm.textContent = shortName(s);
     nm.classList.remove('bump'); void nm.offsetWidth; nm.classList.add('bump');   // a little pop for each new name
   }
 
   function reveal(s) {
     const box = $('revealPic'); box.innerHTML = '';
-    if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = s.name; box.append(img); }
-    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(s.name); box.append(d); }
-    $('revealName').textContent = s.name || t('friend');
+    if (s.photo) { const img = document.createElement('img'); img.src = s.photo; img.alt = shortName(s); box.append(img); }
+    else { const d = document.createElement('div'); d.className = 'initials'; d.style.background = colorFor(s.name || '?'); d.textContent = initials(shortName(s)); box.append(d); }
+    $('revealName').textContent = shortName(s);
     $('reveal').hidden = false;
     $('okBtn').focus();
     fanfare(); confetti();
@@ -783,43 +809,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
   }
 
 
-  // ---------- teacher exit: press and hold ----------
-  const tBtn = $('teacherBtn'), tFill = $('teacherFill');
-  const HOLD = 1200;
-  let holdStart = 0, holdRaf = null;
-  function holdBegin(e) {
-    if (e) e.preventDefault();
-    if (holdStart) return;
-    holdStart = performance.now();
-    $('teacherLbl').textContent = $('teacherShort').textContent = t('keepHolding');
-    (function step(now) {
-      const p = Math.min(1, (now - holdStart) / HOLD);
-      tFill.style.transform = `scaleX(${p})`;
-      if (p >= 1) { location.href = 'index.html'; return; }
-      holdRaf = requestAnimationFrame(step);
-    })(holdStart);
-  }
-  function holdEnd() {
-    holdStart = 0; cancelAnimationFrame(holdRaf);
-    tFill.style.transform = 'scaleX(0)';
-    $('teacherLbl').textContent = t('holdTeacher'); $('teacherShort').textContent = t('teacherShort');
-  }
-  tBtn.addEventListener('pointerdown', holdBegin);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => tBtn.addEventListener(ev, holdEnd));
-  tBtn.addEventListener('contextmenu', e => e.preventDefault());
-  tBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); holdBegin(e); } });
-  tBtn.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') holdEnd(); });
-  tBtn.addEventListener('click', e => e.preventDefault());
+  // ---------- back to the teacher screen: one tap ----------
+  $('backBtn').onclick = () => { location.href = 'index.html'; };
 
   // ---------- Spin Time settings ----------
   const setBtn = $('setBtn'), setPanel = $('setPanel');
   function renderSettings() {
     const sel = $('spTheme');
     if (!sel.options.length) for (const th of THEMES.list) { const o = document.createElement('option'); o.value = th.key; sel.append(o); }
-    for (const o of sel.options) o.textContent = t('theme_' + o.value);
+    for (const o of sel.options) o.textContent = LANG.en('theme_' + o.value);
     sel.value = state.spinTheme || state.theme || 'balloons';
     $('spNoRepeat').checked = state.noRepeat;
     $('spQuick').checked = !!state.quickSpin;
+    $('spSound').checked = state.sound !== false;
   }
   function openSettings(open) {
     if (open && spinning) return;
@@ -833,24 +835,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
   $('spTheme').onchange = () => { if (spinning) return renderSettings(); state.spinTheme = $('spTheme').value; save(); rebuild(); };
   $('spNoRepeat').onchange = () => { if (spinning) return renderSettings(); state.noRepeat = $('spNoRepeat').checked; save(); rebuild(); };
   $('spQuick').onchange = () => { state.quickSpin = $('spQuick').checked; save(); };
-  // Start a new round asks first, so a stray tap doesn't wipe the round
-  function askNewRound() {
-    return new Promise(resolve => {
-      const box = $('confirm');
-      box.hidden = false; $('cfCancel').focus();
-      const done = v => { box.hidden = true; document.removeEventListener('keydown', onKey, true); resolve(v); };
-      const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); } };
-      document.addEventListener('keydown', onKey, true);
-      $('cfOk').onclick = () => done(true);
-      $('cfCancel').onclick = () => done(false);
-      box.onclick = e => { if (e.target === box) done(false); };
-    });
-  }
-  $('spNewRound').onclick = async () => {
+  $('spSound').onchange = () => { state.sound = $('spSound').checked; save(); };
+  // New round: one tap puts everyone back on the wheel. A stray tap can be undone for a few seconds.
+  let undoSnap = null, undoTimer = null;
+  $('newRoundBtn').onclick = () => {
     if (spinning) return;
-    openSettings(false);
-    if (!(await askNewRound()) || spinning) return;
+    undoSnap = { picked: state.students.filter(s => s.picked).map(s => s.id), history: (state.history || []).slice() };
     state.students.forEach(s => s.picked = false); state.history = [];
+    save(); rebuild();
+    $('undoBar').hidden = false;
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(() => { $('undoBar').hidden = true; undoSnap = null; }, 6000);
+  };
+  $('undoBtn').onclick = () => {
+    if (!undoSnap || spinning) return;
+    const picked = new Set(undoSnap.picked);
+    state.students.forEach(s => s.picked = picked.has(s.id));
+    state.history = undoSnap.history;
+    undoSnap = null; clearTimeout(undoTimer); $('undoBar').hidden = true;
     save(); rebuild();
   };
 
@@ -861,8 +863,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   $('reveal').addEventListener('click', e => { if (e.target.id === 'reveal') closeReveal(); });
   $('againAll').onclick = () => { state.students.forEach(s => s.picked = false); state.history = []; save(); rebuild(); };
   document.addEventListener('keydown', e => {
-    if (!$('confirm').hidden) return;
-    if (e.target === tBtn || (e.target.closest && e.target.closest('#setPanel, #setBtn'))) return;
+    if (e.target.id === 'backBtn' || (e.target.closest && e.target.closest('#setPanel, #setBtn'))) return;
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (!$('reveal').hidden) closeReveal(); else spin();
@@ -875,16 +876,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
   if (!document.fullscreenEnabled) fsBtn.hidden = true;
   document.addEventListener('fullscreenchange', () => {
     const on = !!document.fullscreenElement;
-    $('fsLbl').textContent = on ? t('exitFullScreen') : t('fullScreen');
+    $('fsLbl').textContent = on ? LANG.en('exitFullScreen') : LANG.en('fullScreen');
     $('fsIcon').innerHTML = on ? EXIT : ENTER;
-    fsBtn.title = on ? t('exitFullTip') : t('fullTip');
+    fsBtn.title = on ? LANG.en('exitFullTip') : LANG.en('fullTip');
   });
   let fsNoteTimer;
   function fsRefused() {
     if (document.fullscreenElement) return;
-    $('fsLbl').textContent = t('notAvailable');
+    $('fsLbl').textContent = LANG.en('notAvailable');
     clearTimeout(fsNoteTimer);
-    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = t('fullScreen'); }, 2500);
+    fsNoteTimer = setTimeout(() => { if (!document.fullscreenElement) $('fsLbl').textContent = LANG.en('fullScreen'); }, 2500);
   }
   $('fsBtn').onclick = () => {
     try {
